@@ -4,61 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>拼豆模拟器</title>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-        body{height:100vh;overflow:hidden;display:flex}
-        .wrap-all{display:flex;width:100%;height:100%}
-        .tab-big{
-            width:70px;background:#f2f2f2;display:flex;flex-direction:column;
-        }
-        .tab-item{
-            padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
-        }
-        .tab-item.active{background:#333;color:#fff}
-        .color-side{
-            width:130px;padding:10px;background:#f9f9f9;overflow-y:auto;
-        }
-        .color-list{
-            display:grid;grid-template-columns: repeat(2,52px);gap:8px;justify-content:center;
-        }
-        .color-item{
-            width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;
-        }
-        .color-name{font-size:11px;margin-bottom:4px}
-        .color-block{width:42px;height:42px;border:1px solid #aaa;border-radius:50%}
-        .main-canvas{flex:1;display:flex;flex-direction:column}
-        .size-bar{padding:10px;border-bottom:1px solid #ddd}
-        .size-btn{padding:5px 8px;margin:0 3px;border:1px solid #999;background:#fff;cursor:pointer}
-        .size-btn.active{background:#333;color:#fff;border-color:#333}
-        .canvas-box{flex:1;padding:10px;overflow:auto;background:#f7f7f7}
-        #grid{display:grid;gap:1px;width:fit-content}
-        .cell{
-            width:20px;height:20px;cursor:pointer;border-radius:50%;
-            background:#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%);
-        }
 
-        @media(max-width:768px){
-            body{height:auto;overflow:auto}
-            .wrap-all{flex-direction:column;height:auto}
-            .tab-big{
-                width:100%;flex-direction:row;flex-wrap:wrap
-            }
-            .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
-            .color-side{
-                width:100%;
-                overflow-x:auto;
-                overflow-y:hidden;
-            }
-            .color-list{
-                display:flex;
-                flex-wrap:nowrap;
-                gap:8px;
-                width:max-content;
-            }
-        }
-    </style>
+<style>
+/* ========== CSS总区块：页面所有外观样式 ========== */
+/* 改豆子间距、豆子大小、圆环底色、手机排版全部在这里修改 */
+
+
+/* 1.全局通用基础样式 */
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{height:100vh;overflow:hidden;display:flex}
+.wrap-all{display:flex;width:100%;height:100%}
+
+
+/* 2.左侧分类TAB栏样式 */
+.tab-big{
+    width:70px;background:#f2f2f2;display:flex;flex-direction:column;
+}
+.tab-item{
+    padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
+}
+.tab-item.active{background:#333;color:#fff}
+
+
+/* 3.右侧色卡面板样式 */
+.color-side{
+    width:130px;padding:10px;background:#f9f9f9;overflow-y:auto;
+}
+.color-list{
+    display:grid;grid-template-columns: repeat(2,52px);gap:8px;justify-content:center;
+}
+.color-item{
+    width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;
+}
+.color-name{font-size:11px;margin-bottom:4px}
+.color-block{width:42px;height:42px;border:1px solid #aaa;border-radius:50%}
+
+
+/* 4.画布主体、格子样式【改豆子间距：#grid里gap数值】 */
+.main-canvas{flex:1;display:flex;flex-direction:column}
+.size-bar{padding:10px;border-bottom:1px solid #ddd}
+.size-btn{padding:5px 8px;margin:0 3px;border:1px solid #999;background:#fff;cursor:pointer}
+.size-btn.active{background:#333;color:#fff;border-color:#333}
+.canvas-box{flex:1;padding:10px;overflow:auto;background:#f7f7f7}
+#grid{display:grid;gap:3px;width:fit-content}
+/* gap:1px = 豆子之间空隙，修改数字即可调整间距 */
+
+/* 空白单个拼豆格子默认样式 */
+.cell{
+    width:20px;height:20px;cursor:pointer;border-radius:50%;
+    background:#f7f7f7 radial-gradient(#ccc 20%, transparent 20%);
+}
+
+
+/* 5.手机端自适应样式 */
+@media(max-width:768px){
+    body{height:auto;overflow:auto}
+    .wrap-all{flex-direction:column;height:auto}
+    .tab-big{
+        width:100%;flex-direction:row;flex-wrap:wrap
+    }
+    .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
+    .color-side{
+        width:100%;
+        overflow-x:auto;
+        overflow-y:hidden;
+    }
+    .color-list{
+        display:flex;
+        flex-wrap:nowrap;
+        gap:8px;
+        width:max-content;
+    }
+}
+</style>
 </head>
 <body>
+<!-- ========== HTML区块：页面固定骨架【页面布局结构，基本不用改动】 ========== -->
 <div class="wrap-all">
     <div class="tab-big" id="tabWrap">
         <div class="tab-item active" data-type="A">A灰白</div>
@@ -89,7 +110,15 @@
     </div>
 </div>
 
+
 <script>
+/* ========== JS【脚本逻辑总区域】 ========== */
+
+
+/* --------------------------
+模块1：COLOR_DATA 颜色数据源【永久固定！色号固定不再修改，后续优化代码可以剔除本段不复制】
+储存全部A~H色系色值，单独存一份在本地文本即可
+-------------------------- */
 const colorData = {
 A: [
     ["A01","#FFFFFF"],["A02","#F5F5DC"],["A03","#E5E5E5"],["A04","#D0D0D0"],["A05","#A9A9A9"],
@@ -157,13 +186,28 @@ H: [
 ]
 };
 
+
+
+/* --------------------------
+模块2：全局变量【储存当前选中色系、当前选中颜色，极少修改】
+-------------------------- */
 let currentType = "A";
 let currentColor = "#FFFFFF";
 
+
+
+/* --------------------------
+模块3：工具函数 setRing【修改拼豆圆环空心大小在这里，30%=空心占比】
+-------------------------- */
 function setRing(el,color){
-    el.style.background=`radial-(transparent 30%, ${color} 31%)`;
+    el.style.background=`radial-gradient(transparent 30%, ${color} 31%)`;
 }
 
+
+
+/* --------------------------
+模块4：渲染色板函数【左侧切换色系，右侧生成颜色方块】
+-------------------------- */
 function renderColors(type){
     const box = document.getElementById("colorBox");
     box.innerHTML = "";
@@ -180,6 +224,36 @@ function renderColors(type){
     })
 }
 
+
+
+/* --------------------------
+模块5：画板核心逻辑【重中之重：格子生成+点击上色/摘除逻辑，后续改涂色擦除全在这里】
+-------------------------- */
+function createGrid(size){
+    const grid=document.getElementById("grid");
+    grid.innerHTML="";
+    grid.style.gridTemplateColumns=`repeat(${size},20px)`;
+    for(let i=0;i<size*size;i++){
+        const cell=document.createElement("div");
+        cell.className="cell";
+        // 点击逻辑：空白上色，有色点击摘除
+        cell.onclick = function(){
+            if(this.style.background){
+                this.style.removeProperty('background');
+            }else{
+                setRing(this, currentColor);
+            }
+        }
+        grid.appendChild(cell);
+    }
+}
+
+
+
+/* --------------------------
+模块6：页面各类点击绑定【tab切换、画布尺寸切换】
+-------------------------- */
+//左侧分类点击切换色系
 document.getElementById("tabWrap").addEventListener("click",e=>{
     if(e.target.classList.contains("tab-item")){
         document.querySelectorAll(".tab-item").forEach(t=>t.classList.remove("active"));
@@ -188,25 +262,7 @@ document.getElementById("tabWrap").addEventListener("click",e=>{
     }
 })
 
-// ========== 核心：点击上色 / 点击摘除 逻辑 ==========
-function createGrid(size){
-    const grid=document.getElementById("grid");
-    grid.innerHTML="";
-    grid.style.gridTemplateColumns=`repeat(${size},20px)`;
-    for(let i=0;i<size*size;i++){
-        const cell=document.createElement("div");
-        cell.className="cell";
-        cell.onclick = function(){
-            if(!this.style.background){
-                setRing(this, currentColor);
-            }else{
-                this.style.background = "#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%)";
-            }
-        };
-        grid.appendChild(cell);
-    }
-}
-
+//顶部尺寸按钮切换画布大小
 document.querySelector(".size-bar").addEventListener("click",e=>{
     if(e.target.classList.contains("size-btn")){
         document.querySelectorAll(".size-btn").forEach(b=>b.classList.remove("active"));
@@ -215,6 +271,11 @@ document.querySelector(".size-bar").addEventListener("click",e=>{
     }
 })
 
+
+
+/* --------------------------
+模块7：页面初始化启动【页面加载自动运行】
+-------------------------- */
 renderColors(currentType);
 createGrid(15);
 </script>

@@ -1,80 +1,379 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>在线虚拟拼豆</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
-    body{display:flex;height:100vh}
-    /*右侧色板区*/
-    .color-box{width:180px;background:#f5f5f5;padding:20px;overflow-y:auto}
-    .color-item{width:36px;height:36px;border-radius:6px;margin:6px;cursor:pointer;border:3px solid transparent;display:inline-block}
-    .color-item.active{border:#222 solid 3px}
-    /*中间画布*/
-    .wrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:30px}
-    .size-select{display:flex;gap:12px;margin-bottom:30px;overflow-x:auto;padding-bottom:8px;width:100%}
-    .size-btn{padding:10px 16px;border:1px solid #999;border-radius:8px;cursor:pointer;white-space:nowrap}
-    .size-btn:hover{background:#eee}
-    #canvas{display:grid;border:2px solid #333}
-    .cell{width:22px;height:22px;border:1px solid #ddd;cursor:pointer}
-  </style>
+    <meta charset="UTF-8">
+    <title>线下同款全色拼豆模拟器（221色含H系）</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+        body{display:flex;height:100vh;overflow:hidden}
+        /* 左侧竖向分类Tab */
+        .tab-left{
+            width:70px;background:#f2f2f2;display:flex;flex-direction:column;
+        }
+        .tab-item{
+            padding:16px 6px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;
+            font-size:14px;
+        }
+        .tab-item.active{background:#333;color:#fff}
+        /* 右侧主区域 */
+        .main-box{flex:1;display:flex;flex-direction:column}
+        /* 顶部尺寸选择 */
+        .size-bar{padding:12px;border-bottom:1px solid #ddd}
+        .size-btn{padding:6px 12px;margin:0 4px;cursor:pointer;border:1px solid #999;background:#fff}
+        .size-btn.active{background:#333;color:#fff;border-color:#333}
+        /* 颜色选择区 */
+        .color-wrap{padding:12px;border-bottom:1px solid #eee;min-height:130px}
+        .color-list{display:flex;gap:8px;flex-wrap:wrap}
+        .color-item{
+            width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;
+        }
+        .color-name{font-size:11px;margin-bottom:4px;white-space:nowrap}
+        .color-block{width:42px;height:42px;border:1px solid #aaa}
+        /* 画布区域 */
+        .canvas-box{flex:1;padding:10px;overflow:auto}
+        #grid{display:grid;gap:1px;background:#ccc;width:fit-content}
+        .cell{background:#fff;cursor:pointer}
+    </style>
 </head>
 <body>
-  <!--右侧颜色面板-->
-  <div class="color-box" id="colorList"></div>
-  <!--主编辑区-->
-  <div class="wrap">
-    <div class="size-select" id="sizeBar">
-      <div class="size-btn" data-num="15">15×15（耳钉小挂件）</div>
-      <div class="size-btn" data-num="20">20×20（常规小挂饰）</div>
-      <div class="size-btn" data-num="25">25×25（主流尺寸）</div>
-      <div class="size-btn" data-num="30">30×30（大号挂件）</div>
-      <div class="size-btn" data-num="40">40×40（超大款）</div>
-      <div class="size-btn" data-num="50">50×50（巨型拼豆）</div>
-    </div>
-    <div id="canvas"></div>
-  </div>
+<!-- 左侧竖向分类Tab（含H系） -->
+<div class="tab-left" id="tabWrap">
+    <div class="tab-item active" data-type="A">A灰白</div>
+    <div class="tab-item" data-type="B">B棕肤</div>
+    <div class="tab-item" data-type="C">C红色</div>
+    <div class="tab-item" data-type="D">D橙黄</div>
+    <div class="tab-item" data-type="E">E绿色</div>
+    <div class="tab-item" data-type="F">F蓝色</div>
+    <div class="tab-item" data-type="G">G紫玫</div>
+    <div class="tab-item" data-type="H">H灰补</div>
+</div>
 
-  <script>
-    //线下拼豆常用色+色号
-    const colorArr = [
-      {c:"#fff",code:"W01 纯白"},{c:"#000",code:"B01 纯黑"},
-      {c:"#ff3333",code:"R01 大红"},{c:"#ff9999",code:"R02 浅红"},
-      {c:"#ffcc00",code:"Y01 明黄"},{c:"#99cc00",code:"G01 草绿"},
-      {c:"#339933",code:"G02 深绿"},{c:"#3399ff",code:"BL01 天蓝"},
-      {c:"#333399",code:"BL02 藏青"},{c:"#cc9966",code:"BR01 浅棕"}
-    ]
-    let nowColor = colorArr[0].c;
-    const colorDom = document.getElementById('colorList');
-    //渲染右侧颜色豆子
-    colorArr.forEach(item=>{
-      let div = document.createElement('div');
-      div.className = 'color-item';
-      div.style.background = item.c;
-      div.title = item.code;
-      div.onclick=()=>{
-        document.querySelectorAll('.color-item').forEach(d=>d.classList.remove('active'))
-        div.classList.add('active');
-        nowColor = item.c;
-      }
-      colorDom.appendChild(div)
-    })
-    //生成格子画布
-    const canvas = document.getElementById('canvas');
-    document.querySelectorAll('.size-btn').forEach(btn=>{
-      btn.onclick=()=>{
-        let n = Number(btn.dataset.num);
-        canvas.innerHTML='';
-        canvas.style.gridTemplateColumns=`repeat(${n}, 1fr)`
-        //批量生成单元格
-        for(let i=0;i<n*n;i++){
-          let cell = document.createElement('div');
-          cell.className='cell';
-          cell.onclick=()=>cell.style.background=nowColor;
-          canvas.appendChild(cell)
-        }
-      }
-    })
-  </script>
+<div class="main-box">
+    <!-- 尺寸选择 -->
+    <div class="size-bar">
+        <span>画布尺寸：</span>
+        <button class="size-btn active" data-num="15">15×15(耳钉)</button>
+        <button class="size-btn" data-num="20">20×20(小挂饰)</button>
+        <button class="size-btn" data-num="25">25×25(主流)</button>
+        <button class="size-btn" data-num="30">30×30(大号)</button>
+        <button class="size-btn" data-num="40">40×40(超大)</button>
+        <button class="size-btn" data-num="50">50×50(巨型)</button>
+    </div>
+    <!-- 颜色面板 -->
+    <div class="color-wrap">
+        <div class="color-list" id="colorBox"></div>
+    </div>
+    <!-- 拼豆画布 -->
+    <div class="canvas-box">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script>
+// ========== 线下Artkal/MARD 221实色（A-G全+H全）==========
+const colorData = {
+A: [
+    ["A01 纯白","#FFFFFF"],
+    ["A02 米白","#F5F5DC"],
+    ["A03 浅灰1","#E5E5E5"],
+    ["A04 浅灰2","#D0D0D0"],
+    ["A05 中灰","#A9A9A9"],
+    ["A06 深灰1","#696969"],
+    ["A07 深灰2","#404040"],
+    ["A08 炭灰","#333333"],
+    ["A09 纯黑","#000000"],
+    ["A10 暖灰","#B8B0A8"],
+    ["A11 冷灰","#98A0A8"],
+    ["A12 银灰","#C8C8D0"],
+    ["A13 幽灵白","#EFEFEF"],
+    ["A14 烟灰","#D1D1D1"],
+    ["A15 石板灰","#BBBCBC"],
+    ["A16 深石板灰","#767777"],
+    ["A17 矿灰","#484949"],
+    ["A18 深井灰","#23282B"],
+    ["A19 亮银","#A09F9D"],
+    ["A20 铜灰","#9A5516"],
+    ["A21 浅米灰","#F0EBE6"],
+    ["A22 中米灰","#E0D8D0"],
+    ["A23 深米灰","#C0B8B0"],
+    ["A24 浅暖灰","#D8C8B8"],
+    ["A25 中暖灰","#B8A898"],
+    ["A26 深暖灰","#988878"]
+],
+B: [
+    ["B01 极浅肤","#FEDBCD"],
+    ["B02 浅肤色","#F8C8B0"],
+    ["B03 中肤色","#E8B090"],
+    ["B04 深肤色","#D09070"],
+    ["B05 浅棕","#C08050"],
+    ["B06 中棕","#A06040"],
+    ["B07 深棕","#804020"],
+    ["B08 巧克力","#603010"],
+    ["B09 浅卡其","#E0C090"],
+    ["B10 卡其","#C8A070"],
+    ["B11 深卡其","#A88050"],
+    ["B12 驼色","#B08860"],
+    ["B13 浅木色","#D8B898"],
+    ["B14 原木色","#C0A080"],
+    ["B15 胡桃木","#886040"],
+    ["B16 浅咖啡","#D0A880"],
+    ["B17 咖啡","#B08860"],
+    ["B18 深咖啡","#906840"],
+    ["B19 古铜","#B07040"],
+    ["B20 棕褐","#704020"],
+    ["B21 浅麦色","#E8C8A0"],
+    ["B22 麦色","#D8B080"],
+    ["B23 深麦色","#C09060"],
+    ["B24 浅栗色","#A07050"],
+    ["B25 栗色","#805030"],
+    ["B26 深栗色","#603020"],
+    ["B27 浅可可","#D0B090"],
+    ["B28 可可","#B09070"],
+    ["B29 深可可","#907050"],
+    ["B30 浅焦糖","#E0A060"],
+    ["B31 焦糖","#C08040"],
+    ["B32 深焦糖","#A06030"]
+],
+C: [
+    ["C01 极浅粉","#FFE0E0"],
+    ["C02 浅粉","#FFC0C0"],
+    ["C03 中粉","#FF9090"],
+    ["C04 深粉","#FF6060"],
+    ["C05 浅玫红","#F060A0"],
+    ["C06 玫红","#E04080"],
+    ["C07 深玫红","#D02060"],
+    ["C08 浅红","#FF8080"],
+    ["C09 正红","#FF0000"],
+    ["C10 深红","#D00000"],
+    ["C11 酒红","#A00020"],
+    ["C12 砖红","#C04040"],
+    ["C13 橘红","#FF4020"],
+    ["C14 珊瑚红","#FF6040"],
+    ["C15 西瓜红","#FF4040"],
+    ["C16 草莓红","#F02040"],
+    ["C17 樱桃红","#E00040"],
+    ["C18 暗红","#800020"],
+    ["C19 浅洋红","#FF80C0"],
+    ["C20 洋红","#FF4080"],
+    ["C21 深洋红","#E02060"],
+    ["C22 浅绯红","#F08080"],
+    ["C23 绯红","#E06060"],
+    ["C24 深绯红","#D04040"],
+    ["C25 浅豆沙","#D08080"],
+    ["C26 豆沙","#C06060"],
+    ["C27 深豆沙","#A04040"]
+],
+D: [
+    ["D01 浅橙","#FFC080"],
+    ["D02 中橙","#FFA040"],
+    ["D03 正橙","#FF8000"],
+    ["D04 深橙","#E06000"],
+    ["D05 橘黄","#FFB020"],
+    ["D06 南瓜橙","#F08020"],
+    ["D07 杏色","#FFD0A0"],
+    ["D08 浅黄","#FFFFC0"],
+    ["D09 中黄","#FFFF00"],
+    ["D10 正黄","#FFD000"],
+    ["D11 深黄","#FFB000"],
+    ["D12 柠檬黄","#FFFF80"],
+    ["D13 奶黄","#FFF0C0"],
+    ["D14 金黄","#FFC800"],
+    ["D15 土黄","#D0B040"],
+    ["D16 芥末黄","#C0A020"],
+    ["D17 浅橘","#FFD080"],
+    ["D18 蜜桃橙","#FFB080"],
+    ["D19 日落橙","#F07030"],
+    ["D20 琥珀黄","#E0A040"],
+    ["D21 香蕉黄","#FFE060"],
+    ["D22 象牙黄","#FFF8E0"],
+    ["D23 浅金黄","#FFD840"],
+    ["D24 金橙","#FFA820"],
+    ["D25 浅土黄","#E0C060"],
+    ["D26 深土黄","#B09030"],
+    ["D27 浅芥末","#D0B050"],
+    ["D28 深芥末","#A08020"]
+],
+E: [
+    ["E01 浅薄荷绿","#C0FFE0"],
+    ["E02 薄荷绿","#80FFC0"],
+    ["E03 浅草绿","#C0E080"],
+    ["E04 草绿","#80C040"],
+    ["E05 正绿","#00C000"],
+    ["E06 深绿","#008000"],
+    ["E07 墨绿","#004000"],
+    ["E08 浅青绿","#80E0C0"],
+    ["E09 青绿","#40C080"],
+    ["E10 深青绿","#008060"],
+    ["E11 浅森林绿","#408040"],
+    ["E12 森林绿","#206020"],
+    ["E13 浅橄榄绿","#808040"],
+    ["E14 橄榄绿","#606020"],
+    ["E15 浅黄绿","#E0FF80"],
+    ["E16 黄绿","#C0FF40"],
+    ["E17 荧光绿","#80FF00"],
+    ["E18 浅湖绿","#80E0A0"],
+    ["E19 湖绿","#40C060"],
+    ["E20 青苔绿","#608060"],
+    ["E21 鼠尾草绿","#A0C0A0"],
+    ["E22 抹茶绿","#80A080"],
+    ["E23 苍绿","#C0E0C0"],
+    ["E24 葱绿","#40A040"],
+    ["E25 浅竹绿","#C8E0B0"],
+    ["E26 竹绿","#88C060"],
+    ["E27 深竹绿","#488030"],
+    ["E28 浅松绿","#80A080"],
+    ["E29 松绿","#408060"],
+    ["E30 深松绿","#206040"],
+    ["E31 浅豆绿","#A0C080"],
+    ["E32 豆绿","#60A050"]
+],
+F: [
+    ["F01 浅天蓝","#C0E0FF"],
+    ["F02 天蓝","#80C0FF"],
+    ["F03 正蓝","#0080FF"],
+    ["F04 深蓝","#0040C0"],
+    ["F05 藏蓝","#002080"],
+    ["F06 浅宝蓝","#40A0FF"],
+    ["F07 宝蓝","#0060E0"],
+    ["F08 浅湖蓝","#80D0FF"],
+    ["F09 湖蓝","#40A0E0"],
+    ["F10 深湖蓝","#0070C0"],
+    ["F11 浅靛蓝","#6080E0"],
+    ["F12 靛蓝","#4060C0"],
+    ["F13 浅青蓝","#80E0FF"],
+    ["F14 青蓝","#40C0FF"],
+    ["F15 深青蓝","#00A0E0"],
+    ["F16 雾霾蓝","#80A0C0"],
+    ["F17 灰蓝","#6080A0"],
+    ["F18 海军蓝","#003060"],
+    ["F19 矢车菊蓝","#60A0FF"],
+    ["F20 普鲁士蓝","#004080"],
+    ["F21 天青","#C0E0F0"],
+    ["F22 浅蓝灰","#A0C0E0"],
+    ["F23 钢蓝","#406080"],
+    ["F24 午夜蓝","#002040"],
+    ["F25 浅牛仔蓝","#90B0D0"],
+    ["F26 牛仔蓝","#5080B0"],
+    ["F27 深牛仔蓝","#306090"],
+    ["F28 浅灰蓝","#B0C0D0"],
+    ["F29 深灰蓝","#7090B0"]
+],
+G: [
+    ["G01 浅紫","#E0C0FF"],
+    ["G02 中紫","#C080FF"],
+    ["G03 正紫","#8040FF"],
+    ["G04 深紫","#6020C0"],
+    ["G05 浅紫罗兰","#D0B0FF"],
+    ["G06 紫罗兰","#A060E0"],
+    ["G07 深紫罗兰","#8040C0"],
+    ["G08 浅薰衣草","#C0B0E0"],
+    ["G09 薰衣草","#A080C0"],
+    ["G10 深薰衣草","#8060A0"],
+    ["G11 浅玫紫","#F0C0FF"],
+    ["G12 玫紫","#E080FF"],
+    ["G13 深玫紫","#D040E0"],
+    ["G14 浅藕粉","#F0D0E0"],
+    ["G15 藕粉","#E0B0C0"],
+    ["G16 浅豆沙紫","#D0A0B0"],
+    ["G17 豆沙紫","#C08090"],
+    ["G18 深豆沙紫","#A06070"],
+    ["G19 浅葡萄紫","#C080E0"],
+    ["G20 葡萄紫","#A040C0"],
+    ["G21 深葡萄紫","#8020A0"],
+    ["G22 浅茄紫","#B080B0"],
+    ["G23 茄紫","#906090"],
+    ["G24 深茄紫","#704070"],
+    ["G25 浅梅紫","#D080C0"],
+    ["G26 梅紫","#B060A0"],
+    ["G27 深梅紫","#904080"]
+],
+H: [
+    ["H01 浅冷灰","#D0D8E0"],
+    ["H02 中冷灰","#B0B8C0"],
+    ["H03 深冷灰","#808890"],
+    ["H04 浅暖灰","#D8D0C8"],
+    ["H05 中暖灰","#B8B0A8"],
+    ["H06 深暖灰","#989088"],
+    ["H07 浅蓝灰","#C0C8D0"],
+    ["H08 中蓝灰","#A0A8B0"],
+    ["H09 深蓝灰","#707880"],
+    ["H10 浅绿灰","#C0D0C8"],
+    ["H11 中绿灰","#A0B0A8"],
+    ["H12 深绿灰","#708078"],
+    ["H13 浅紫灰","#D0C8D0"],
+    ["H14 中紫灰","#B0A8B0"],
+    ["H15 深紫灰","#807880"],
+    ["H16 黑棕灰","#1D1414"],
+    ["H17 极浅灰","#F1EDED"],
+    ["H18 米白灰","#FFFDF0"],
+    ["H19 浅米灰","#F6EFE2"],
+    ["H20 青灰","#949FA3"],
+    ["H21 乳白灰","#FFFBE1"],
+    ["H22 淡紫灰","#CACAD4"],
+    ["H23 橄榄灰","#9A9D94"]
+]
+};
+
+let currentType = "A";
+let currentColor = "#FFFFFF";
+
+// 渲染颜色列表
+function renderColors(type){
+    const box = document.getElementById("colorBox");
+    box.innerHTML = "";
+    colorData[type].forEach(([name, hex]) => {
+        const item = document.createElement("div");
+        item.className = "color-item";
+        item.innerHTML = `
+            <div class="color-name">${name}</div>
+            <div class="color-block" style="background:${hex}"></div>
+        `;
+        item.addEventListener("click", () => {
+            currentColor = hex;
+            document.querySelectorAll(".color-block").forEach(b => b.style.outline = "none");
+            item.querySelector(".color-block").style.outline = "2px solid #333";
+        });
+        box.appendChild(item);
+    });
+}
+
+// Tab 切换
+document.getElementById("tabWrap").addEventListener("click", (e) => {
+    if(e.target.classList.contains("tab-item")){
+        document.querySelectorAll(".tab-item").forEach(t => t.classList.remove("active"));
+        e.target.classList.add("active");
+        currentType = e.target.dataset.type;
+        renderColors(currentType);
+    }
+});
+
+// 生成画布
+function createGrid(size){
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    grid.style.gridTemplateColumns = `repeat(${size}, 20px)`;
+    for(let i=0; i<size*size; i++){
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.style.width = "20px";
+        cell.style.height = "20px";
+        cell.addEventListener("click", () => cell.style.background = currentColor);
+        grid.appendChild(cell);
+    }
+}
+
+// 尺寸按钮
+document.querySelector(".size-bar").addEventListener("click", (e) => {
+    if(e.target.classList.contains("size-btn")){
+        document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
+        e.target.classList.add("active");
+        createGrid(parseInt(e.target.dataset.num));
+    }
+});
+
+// 初始化
+renderColors(currentType);
+createGrid(15);
+</script>
 </body>
 </html>

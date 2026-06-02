@@ -7,60 +7,33 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
 body{height:100vh;overflow:hidden;display:flex}
-.wrap-all{display:flex;width:100%;height:100%}
+.wrap-all{display:flex;width:100%;height:100%;flex-direction:column}
 
-.tab-big{
-    width:70px;background:#f2f7f7;display:flex;flex-direction:column;
+/*顶部合并工具栏 深色背景 */
+.top-toolbar{
+    width:100%;
+    padding:10px 12px;
+    background:rgba(0,0,0,0.8);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
 }
-.tab-item{
-    padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
+.left-size{
+    display:flex;
+    align-items:center;
+    color:#fff;
+    gap:6px;
 }
-.tab-item.active{background:#333;color:#fff}
-
-.color-side{
-    width:130px;padding:10px;background:#f9f9f9;overflow-y:auto;
+#sizeSelect{
+    padding:6px 8px;
+    border-radius:6px;
+    border:none;
+    outline:none;
 }
-.color-list{
-    display:grid;grid-template-columns: repeat(2,52px);gap:8px;justify-content:center;
-}
-.color-item{
-    width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;
-}
-/*色号移入圆中间，黑字白描边*/
-.color-name{
-    position:absolute;top:16px;left:0;right:0;text-align:center;font-size:10px;
-    color:#000;
-    -webkit-text-stroke:1px #fff;
-}
-.color-block{width:42px;height:42px;border:1px solid #aaa;border-radius:50%}
-
-.main-canvas{flex:1;display:flex;flex-direction:column}
-.size-bar{padding:10px;border-bottom:1px solid #ddd}
-.size-btn{padding:5px 8px;margin:0 3px;border:1px solid #999;background:#fff;cursor:pointer}
-.size-btn.active{background:#333;color:#fff;border-color:#333}
-.canvas-box{
-    flex:1;padding:10px;overflow:auto;background:#f7f7f7;
-    display:flex;align-items:center;justify-content:center;
-}
-#grid{display:grid;gap:1px;width:fit-content;padding:6px;}
-/*居中缩放+预留空间，放大不裁切*/
-.cell{
-    width:20px;height:20px;cursor:pointer;border-radius:50%;
-    background:#f7f7f7 radial-gradient(#ccc 25%, transparent 25.1%);
-    transform:scale(1);
-    transform-origin:center center;
-    transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
-}
-.cell.popLight{
-    filter:brightness(1.6);
-}
-
-.toolbar{
-    padding:10px;
-    background: rgba(0, 0, 0, 0.8);
+.right-btns{
     display:flex;
     gap:8px;
-    align-items:center;
 }
 .undo-btn,.redo-btn,.saveImgBtn,.saveDraftBtn{
     height:40px;
@@ -81,6 +54,53 @@ body{height:100vh;overflow:hidden;display:flex}
     background:rgba(255,255,255,0.65);
 }
 
+.content-wrap{
+    display:flex;
+    flex:1;
+    overflow:hidden;
+}
+.tab-big{
+    width:70px;background:#f2f7f7;display:flex;flex-direction:column;
+}
+.tab-item{
+    padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
+}
+.tab-item.active{background:#333;color:#fff}
+
+.color-side{
+    width:130px;padding:10px;background:#f9f9f9;overflow-y:auto;
+}
+.color-list{
+    display:grid;grid-template-columns: repeat(2,52px);gap:8px;justify-content:center;
+}
+.color-item{
+    width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;
+}
+/*圆内黑字+白描边 */
+.color-name{
+    position:absolute;top:16px;left:0;right:0;text-align:center;font-size:10px;
+    color:#000;
+    -webkit-text-stroke:1px #fff;
+}
+.color-block{width:42px;height:42px;border:1px solid #aaa;border-radius:50%}
+
+.main-canvas{flex:1;display:flex;flex-direction:column}
+.canvas-box{
+    flex:1;padding:10px;overflow:auto;background:#f7f7f7;
+    display:flex;align-items:center;justify-content:center;
+}
+#grid{display:grid;gap:1px;width:fit-content;padding:6px;}
+.cell{
+    width:20px;height:20px;cursor:pointer;border-radius:50%;
+    background:#f7f7f7 radial-gradient(#ccc 28%, transparent 28.1%);
+    transform:scale(1);
+    transform-origin:center center;
+    transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+.cell.popLight{
+    filter:brightness(1.6);
+}
+
 .previewMask{
     position:fixed;left:0;top:0;width:100vw;height:100vh;
     background:rgba(0,0,0,0.75);
@@ -95,6 +115,7 @@ body{height:100vh;overflow:hidden;display:flex}
 @media(max-width:768px){
     body{height:auto;overflow:auto}
     .wrap-all{flex-direction:column;height:auto}
+    .content-wrap{flex-direction:column}
     .tab-big{width:100%;flex-direction:row;flex-wrap:wrap}
     .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
     .color-side{width:100%;overflow-x:auto;overflow-y:hidden}
@@ -104,38 +125,46 @@ body{height:100vh;overflow:hidden;display:flex}
 </head>
 <body>
 <div class="wrap-all">
-    <div class="tab-big" id="tabWrap">
-        <div class="tab-item active" data-type="A">A</div>
-        <div class="tab-item" data-type="B">B</div>
-        <div class="tab-item" data-type="C">C</div>
-        <div class="tab-item" data-type="D">D</div>
-        <div class="tab-item" data-type="E">E</div>
-        <div class="tab-item" data-type="F">F</div>
-        <div class="tab-item" data-type="G">G</div>
-        <div class="tab-item" data-type="H">H</div>
-        <div class="tab-item" data-type="M">M</div>
-    </div>
-    <div class="color-side">
-        <div class="color-list" id="colorBox"></div>
-    </div>
-    <div class="main-canvas">
-        <div class="size-bar">
+    <!--顶部合并工具栏：左尺寸下拉｜右四个按钮 -->
+    <div class="top-toolbar">
+        <div class="left-size">
             <span>尺寸：</span>
-            <button class="size-btn active" data-num="15">15×15</button>
-            <button class="size-btn" data-num="20">20×20</button>
-            <button class="size-btn" data-num="25">25×25</button>
-            <button class="size-btn" data-num="30">30×30</button>
-            <button class="size-btn" data-num="40">40×40</button>
-            <button class="size-btn" data-num="50">50×50</button>
+            <select id="sizeSelect">
+                <option value="15">15×15</option>
+                <option value="20">20×20</option>
+                <option value="25">25×25</option>
+                <option value="30">30×30</option>
+                <option value="40">40×40</option>
+                <option value="50">50×50</option>
+            </select>
         </div>
-        <div class="canvas-box">
-            <div id="grid"></div>
-        </div>
-        <div class="toolbar">
+        <div class="right-btns">
             <button class="undo-btn" id="undoBtn">撤销</button>
             <button class="redo-btn" id="redoBtn">重做</button>
             <button class="saveImgBtn" id="saveImgBtn">保存效果图</button>
             <button class="saveDraftBtn" id="saveDraftBtn">保存图纸</button>
+        </div>
+    </div>
+
+    <div class="content-wrap">
+        <div class="tab-big" id="tabWrap">
+            <div class="tab-item active" data-type="A">A</div>
+            <div class="tab-item" data-type="B">B</div>
+            <div class="tab-item" data-type="C">C</div>
+            <div class="tab-item" data-type="D">D</div>
+            <div class="tab-item" data-type="E">E</div>
+            <div class="tab-item" data-type="F">F</div>
+            <div class="tab-item" data-type="G">G</div>
+            <div class="tab-item" data-type="H">H</div>
+            <div class="tab-item" data-type="M">M</div>
+        </div>
+        <div class="color-side">
+            <div class="color-list" id="colorBox"></div>
+        </div>
+        <div class="main-canvas">
+            <div class="canvas-box">
+                <div id="grid"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -155,8 +184,9 @@ let history = [];
 let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
-const BEAD_HOLE_RATE = 0.25;
-let audioUnlock = false; //解锁音频标记
+//画布28%、导出同样28%，内圈统一放大
+const BEAD_HOLE_RATE = 0.28;
+let audioUnlock = false;
 
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
@@ -165,6 +195,7 @@ const saveDraftBtn = document.getElementById('saveDraftBtn');
 const previewMask = document.getElementById('previewMask');
 const previewImgEle = document.getElementById('previewImgEle');
 const popAudio = document.getElementById('popAudio');
+const sizeSelect = document.getElementById('sizeSelect');
 
 previewMask.onclick = e=>{
     if(e.target === previewMask) previewMask.style.display = 'none';
@@ -176,7 +207,6 @@ function updateBtnState(){
 function setRing(el,color){
     el.style.background=`radial-gradient(transparent ${BEAD_HOLE_RATE*100}%, ${color} ${BEAD_HOLE_RATE*100+0.1}%)`;
 }
-//播放动画+解锁音频
 function playBeadAnim(el){
     if(!audioUnlock){
         popAudio.play().then(()=>audioUnlock=true).catch(()=>{});
@@ -286,19 +316,6 @@ function drawCoordAndGrid(ox, oy, size, gs, ctx){
         ctx.fillText(i+1, ox-25, oy+gs*(i+0.5)+5);
     }
 }
-function wrapText(text, x, y, maxW, lineH, ctx){
-    const words = text.split(' ');
-    let line = '', yy = y;
-    for(const w of words){
-        const test = line + w + ' ';
-        const metrics = ctx.measureText(test);
-        if(metrics.width>maxW && line){
-            ctx.fillText(line, x, yy);
-            line = w + ' '; yy += lineH;
-        }else line = test;
-    }
-    if(line) ctx.fillText(line, x, yy);
-}
 
 function previewEffectImg(){
     const size = Math.sqrt(cellCodeList.length);
@@ -393,7 +410,6 @@ function previewDraftImg(){
             ctx.fillStyle=col;ctx.fillRect(x,y,gridSize,gridSize);
             ctx.font="12px monospace";
             ctx.textAlign="center";
-            //黑字+白描边
             ctx.strokeStyle="#fff";
             ctx.lineWidth=2;
             ctx.strokeText(cd,x+gridSize/2,y+gridSize/2+5);
@@ -439,6 +455,10 @@ function previewDraftImg(){
     previewMask.style.display="flex";
 }
 
+//下拉切换尺寸
+sizeSelect.onchange=()=>{
+    createGrid(+sizeSelect.value);
+}
 saveImgBtn.onclick=previewEffectImg;
 saveDraftBtn.onclick=previewDraftImg;
 undoBtn.onclick=undo;redoBtn.onclick=redo;
@@ -448,13 +468,6 @@ document.getElementById("tabWrap").onclick = e=>{
         e.target.classList.add("active");
         currentType = e.target.dataset.type;
         renderColors(currentType);
-    }
-}
-document.querySelector(".size-bar").onclick = e=>{
-    if(e.target.classList.contains("size-btn")){
-        document.querySelectorAll(".size-btn").forEach(b=>b.classList.remove("active"));
-        e.target.classList.add("active");
-        createGrid(+e.target.dataset.num);
     }
 }
 

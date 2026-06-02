@@ -31,13 +31,15 @@ body{height:100vh;overflow:hidden;display:flex}
 .color-item{
     width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;
 }
-/*色卡圈内文字：居中、常规、黑字+细白描边 */
+/*色卡：圆圈正居中、常规字、纯黑无描边*/
 .color-name{
-    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
     font-size:10px;
     font-weight:normal;
     color:#000;
-    -webkit-text-stroke:0.7px #fff;
     z-index:2;
 }
 .color-block{width:42px;height:42px;border:1px solid #aaa;border-radius:50%}
@@ -49,7 +51,6 @@ body{height:100vh;overflow:hidden;display:flex}
     flex-direction:column;
     height:100%;
 }
-/*工具栏只在右侧，宽度跟随画布 */
 .top-toolbar{
     padding:10px 12px;
     background:rgba(0,0,0,0.8);
@@ -67,13 +68,13 @@ body{height:100vh;overflow:hidden;display:flex}
     display:flex;
     gap:8px;
 }
-/*下拉和按钮统一样式 */
+/*按钮高度缩小、常态白90% */
 #sizeSelect,
 .undo-btn,.redo-btn,.saveImgBtn,.saveDraftBtn{
-    height:40px;
+    height:34px;
     border-radius:12px;
     border:none;
-    background:rgba(255,255,255,0.5);
+    background:rgba(255,255,255,0.9);
     color:#000;
     cursor:pointer;
     padding:0 10px;
@@ -94,7 +95,7 @@ body{height:100vh;overflow:hidden;display:flex}
 #sizeSelect:hover:not(:disabled),
 .undo-btn:hover:not(:disabled),.redo-btn:hover:not(:disabled),
 .saveImgBtn:hover,.saveDraftBtn:hover{
-    background:rgba(255,255,255,0.65);
+    background:rgba(255,255,255,0.95);
 }
 
 .canvas-box{
@@ -159,7 +160,7 @@ body{height:100vh;overflow:hidden;display:flex}
     <div class="right-main">
         <div class="top-toolbar">
             <div class="left-group">
-                <span style="color:#fff">尺寸：</span>
+                <!--删除尺寸文字，只留下拉-->
                 <select id="sizeSelect">
                     <option value="15">15×15</option>
                     <option value="20">20×20</option>
@@ -197,7 +198,7 @@ let history = [];
 let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
-const BEAD_HOLE_RATE = 0.28; //导出&豆子内孔统一放大
+const BEAD_HOLE_RATE = 0.28;
 let audioUnlock = false;
 
 const undoBtn = document.getElementById('undoBtn');

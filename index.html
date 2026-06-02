@@ -7,57 +7,12 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
 body{height:100vh;overflow:hidden;display:flex}
-.wrap-all{display:flex;width:100%;height:100%;flex-direction:column}
+.wrap-all{display:flex;width:100%;height:100%;}
 
-/*顶部合并工具栏 深色背景 */
-.top-toolbar{
-    width:100%;
-    padding:10px 12px;
-    background:rgba(0,0,0,0.8);
+/*左侧固定侧边：一级Tab+色卡 */
+.left-sidebar{
     display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-}
-.left-size{
-    display:flex;
-    align-items:center;
-    color:#fff;
-    gap:6px;
-}
-#sizeSelect{
-    padding:6px 8px;
-    border-radius:6px;
-    border:none;
-    outline:none;
-}
-.right-btns{
-    display:flex;
-    gap:8px;
-}
-.undo-btn,.redo-btn,.saveImgBtn,.saveDraftBtn{
-    height:40px;
-    border-radius:12px;
-    border:none;
-    background:rgba(255,255,255,0.5);
-    color:#fff;
-    cursor:pointer;
-    padding:0 10px;
-}
-.undo-btn:disabled,.redo-btn:disabled{
-    background:rgba(255,255,255,0.2);
-    color:rgba(255,255,255,0.5);
-    cursor:not-allowed;
-}
-.undo-btn:hover:not(:disabled),.redo-btn:hover:not(:disabled),
-.saveImgBtn:hover,.saveDraftBtn:hover{
-    background:rgba(255,255,255,0.65);
-}
-
-.content-wrap{
-    display:flex;
-    flex:1;
-    overflow:hidden;
+    height:100%;
 }
 .tab-big{
     width:70px;background:#f2f7f7;display:flex;flex-direction:column;
@@ -76,23 +31,81 @@ body{height:100vh;overflow:hidden;display:flex}
 .color-item{
     width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;
 }
-/*圆内黑字+白描边 */
+/*色卡圈内文字：居中、常规、黑字+细白描边 */
 .color-name{
-    position:absolute;top:16px;left:0;right:0;text-align:center;font-size:10px;
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:10px;
+    font-weight:normal;
     color:#000;
-    -webkit-text-stroke:1px #fff;
+    -webkit-text-stroke:0.7px #fff;
+    z-index:2;
 }
 .color-block{width:42px;height:42px;border:1px solid #aaa;border-radius:50%}
 
-.main-canvas{flex:1;display:flex;flex-direction:column}
+/*右侧画布区域：顶栏+画布 */
+.right-main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+}
+/*工具栏只在右侧，宽度跟随画布 */
+.top-toolbar{
+    padding:10px 12px;
+    background:rgba(0,0,0,0.8);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+}
+.left-group{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+.right-group{
+    display:flex;
+    gap:8px;
+}
+/*下拉和按钮统一样式 */
+#sizeSelect,
+.undo-btn,.redo-btn,.saveImgBtn,.saveDraftBtn{
+    height:40px;
+    border-radius:12px;
+    border:none;
+    background:rgba(255,255,255,0.5);
+    color:#000;
+    cursor:pointer;
+    padding:0 10px;
+}
+/*下拉箭头与文字间距8px */
+#sizeSelect{
+    padding-right:18px;
+    appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='12' viewBox='0 0 24 24' width='12' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 8px center;
+}
+.undo-btn:disabled,.redo-btn:disabled{
+    background:rgba(255,255,255,0.2);
+    color:rgba(255,255,255,0.5);
+    cursor:not-allowed;
+}
+#sizeSelect:hover:not(:disabled),
+.undo-btn:hover:not(:disabled),.redo-btn:hover:not(:disabled),
+.saveImgBtn:hover,.saveDraftBtn:hover{
+    background:rgba(255,255,255,0.65);
+}
+
 .canvas-box{
     flex:1;padding:10px;overflow:auto;background:#f7f7f7;
     display:flex;align-items:center;justify-content:center;
 }
 #grid{display:grid;gap:1px;width:fit-content;padding:6px;}
+/*空白格子灰点缩小+变淡 28%豆子内孔、空白改用12%浅灰 */
 .cell{
     width:20px;height:20px;cursor:pointer;border-radius:50%;
-    background:#f7f7f7 radial-gradient(#ccc 28%, transparent 28.1%);
+    background:#f7f7f7 radial-gradient(#dddddd 12%, transparent 12.1%);
     transform:scale(1);
     transform-origin:center center;
     transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
@@ -115,7 +128,7 @@ body{height:100vh;overflow:hidden;display:flex}
 @media(max-width:768px){
     body{height:auto;overflow:auto}
     .wrap-all{flex-direction:column;height:auto}
-    .content-wrap{flex-direction:column}
+    .left-sidebar{flex-direction:column;width:100%}
     .tab-big{width:100%;flex-direction:row;flex-wrap:wrap}
     .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
     .color-side{width:100%;overflow-x:auto;overflow-y:hidden}
@@ -125,28 +138,8 @@ body{height:100vh;overflow:hidden;display:flex}
 </head>
 <body>
 <div class="wrap-all">
-    <!--顶部合并工具栏：左尺寸下拉｜右四个按钮 -->
-    <div class="top-toolbar">
-        <div class="left-size">
-            <span>尺寸：</span>
-            <select id="sizeSelect">
-                <option value="15">15×15</option>
-                <option value="20">20×20</option>
-                <option value="25">25×25</option>
-                <option value="30">30×30</option>
-                <option value="40">40×40</option>
-                <option value="50">50×50</option>
-            </select>
-        </div>
-        <div class="right-btns">
-            <button class="undo-btn" id="undoBtn">撤销</button>
-            <button class="redo-btn" id="redoBtn">重做</button>
-            <button class="saveImgBtn" id="saveImgBtn">保存效果图</button>
-            <button class="saveDraftBtn" id="saveDraftBtn">保存图纸</button>
-        </div>
-    </div>
-
-    <div class="content-wrap">
+    <!--左侧固定侧边栏-->
+    <div class="left-sidebar">
         <div class="tab-big" id="tabWrap">
             <div class="tab-item active" data-type="A">A</div>
             <div class="tab-item" data-type="B">B</div>
@@ -161,10 +154,30 @@ body{height:100vh;overflow:hidden;display:flex}
         <div class="color-side">
             <div class="color-list" id="colorBox"></div>
         </div>
-        <div class="main-canvas">
-            <div class="canvas-box">
-                <div id="grid"></div>
+    </div>
+    <!--右侧画布+顶栏-->
+    <div class="right-main">
+        <div class="top-toolbar">
+            <div class="left-group">
+                <span style="color:#fff">尺寸：</span>
+                <select id="sizeSelect">
+                    <option value="15">15×15</option>
+                    <option value="20">20×20</option>
+                    <option value="25">25×25</option>
+                    <option value="30">30×30</option>
+                    <option value="40">40×40</option>
+                    <option value="50">50×50</option>
+                </select>
+                <button class="undo-btn" id="undoBtn">撤销</button>
+                <button class="redo-btn" id="redoBtn">重做</button>
             </div>
+            <div class="right-group">
+                <button class="saveImgBtn" id="saveImgBtn">保存效果图</button>
+                <button class="saveDraftBtn" id="saveDraftBtn">保存图纸</button>
+            </div>
+        </div>
+        <div class="canvas-box">
+            <div id="grid"></div>
         </div>
     </div>
 </div>
@@ -184,8 +197,7 @@ let history = [];
 let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
-//画布28%、导出同样28%，内圈统一放大
-const BEAD_HOLE_RATE = 0.28;
+const BEAD_HOLE_RATE = 0.28; //导出&豆子内孔统一放大
 let audioUnlock = false;
 
 const undoBtn = document.getElementById('undoBtn');
@@ -455,10 +467,7 @@ function previewDraftImg(){
     previewMask.style.display="flex";
 }
 
-//下拉切换尺寸
-sizeSelect.onchange=()=>{
-    createGrid(+sizeSelect.value);
-}
+sizeSelect.onchange=()=>createGrid(+sizeSelect.value);
 saveImgBtn.onclick=previewEffectImg;
 saveDraftBtn.onclick=previewDraftImg;
 undoBtn.onclick=undo;redoBtn.onclick=redo;

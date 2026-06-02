@@ -29,9 +29,9 @@ body{height:100vh;overflow:hidden;display:flex}
     display:grid;grid-template-columns: repeat(2,52px);gap:8px;justify-content:center;
 }
 .color-item{
-    width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;
+    width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;
 }
-/*圆形设为定位父级，文字以圆居中 */
+/*圆形设相对定位，文字放进内部 */
 .color-block{
     width:42px;height:42px;border:1px solid #aaa;border-radius:50%;
     position:relative;
@@ -55,13 +55,12 @@ body{height:100vh;overflow:hidden;display:flex}
     display:flex;
     flex-direction:column;
     height:100%;
-    padding:24px; /*整体留白，实现工具栏四周24间距 */
+    padding:24px;
 }
-/*苹果毛玻璃悬浮工具栏 */
+/*苹果深色毛玻璃悬浮工具栏 深灰半透+磨砂 */
 .top-toolbar{
     padding:10px 12px;
-    /*毛玻璃样式 */
-    background:rgba(255,255,255,0.25);
+    background:rgba(28,28,28,0.72);
     backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
     border-radius:16px;
@@ -69,7 +68,7 @@ body{height:100vh;overflow:hidden;display:flex}
     justify-content:space-between;
     align-items:center;
     gap:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    box-shadow:0 4px 14px rgba(0,0,0,0.18);
 }
 .left-group{
     display:flex;
@@ -210,7 +209,7 @@ let history = [];
 let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
-//拼豆内圈放大，页面&导出统一0.35
+//拼豆内圈放大0.35
 const BEAD_HOLE_RATE = 0.35;
 let audioUnlock = false;
 
@@ -254,7 +253,8 @@ function renderColors(type){
     colorData[type].forEach(([code, hex])=>{
         const item = document.createElement("div");
         item.className="color-item";
-        item.innerHTML=`<div class="color-name">${code}</div><div class="color-block" style="background:${hex}" title="${code}"></div>`;
+        //文字嵌套进color-block内部，彻底居中
+        item.innerHTML=`<div class="color-block" style="background:${hex}" title="${code}"><div class="color-name">${code}</div></div>`;
         item.onclick=()=>{
             currentColor=hex;
             currentCode=code;

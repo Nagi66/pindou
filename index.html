@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>在线虚拟拼豆</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
+    body{display:flex;height:100vh}
+    /*右侧色板区*/
+    .color-box{width:180px;background:#f5f5f5;padding:20px;overflow-y:auto}
+    .color-item{width:36px;height:36px;border-radius:6px;margin:6px;cursor:pointer;border:3px solid transparent;display:inline-block}
+    .color-item.active{border:#222 solid 3px}
+    /*中间画布*/
+    .wrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:30px}
+    .size-select{display:flex;gap:12px;margin-bottom:30px;overflow-x:auto;padding-bottom:8px;width:100%}
+    .size-btn{padding:10px 16px;border:1px solid #999;border-radius:8px;cursor:pointer;white-space:nowrap}
+    .size-btn:hover{background:#eee}
+    #canvas{display:grid;border:2px solid #333}
+    .cell{width:22px;height:22px;border:1px solid #ddd;cursor:pointer}
+  </style>
+</head>
+<body>
+  <!--右侧颜色面板-->
+  <div class="color-box" id="colorList"></div>
+  <!--主编辑区-->
+  <div class="wrap">
+    <div class="size-select" id="sizeBar">
+      <div class="size-btn" data-num="15">15×15（耳钉小挂件）</div>
+      <div class="size-btn" data-num="20">20×20（常规小挂饰）</div>
+      <div class="size-btn" data-num="25">25×25（主流尺寸）</div>
+      <div class="size-btn" data-num="30">30×30（大号挂件）</div>
+      <div class="size-btn" data-num="40">40×40（超大款）</div>
+      <div class="size-btn" data-num="50">50×50（巨型拼豆）</div>
+    </div>
+    <div id="canvas"></div>
+  </div>
+
+  <script>
+    //线下拼豆常用色+色号
+    const colorArr = [
+      {c:"#fff",code:"W01 纯白"},{c:"#000",code:"B01 纯黑"},
+      {c:"#ff3333",code:"R01 大红"},{c:"#ff9999",code:"R02 浅红"},
+      {c:"#ffcc00",code:"Y01 明黄"},{c:"#99cc00",code:"G01 草绿"},
+      {c:"#339933",code:"G02 深绿"},{c:"#3399ff",code:"BL01 天蓝"},
+      {c:"#333399",code:"BL02 藏青"},{c:"#cc9966",code:"BR01 浅棕"}
+    ]
+    let nowColor = colorArr[0].c;
+    const colorDom = document.getElementById('colorList');
+    //渲染右侧颜色豆子
+    colorArr.forEach(item=>{
+      let div = document.createElement('div');
+      div.className = 'color-item';
+      div.style.background = item.c;
+      div.title = item.code;
+      div.onclick=()=>{
+        document.querySelectorAll('.color-item').forEach(d=>d.classList.remove('active'))
+        div.classList.add('active');
+        nowColor = item.c;
+      }
+      colorDom.appendChild(div)
+    })
+    //生成格子画布
+    const canvas = document.getElementById('canvas');
+    document.querySelectorAll('.size-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        let n = Number(btn.dataset.num);
+        canvas.innerHTML='';
+        canvas.style.gridTemplateColumns=`repeat(${n}, 1fr)`
+        //批量生成单元格
+        for(let i=0;i<n*n;i++){
+          let cell = document.createElement('div');
+          cell.className='cell';
+          cell.onclick=()=>cell.style.background=nowColor;
+          canvas.appendChild(cell)
+        }
+      }
+    })
+  </script>
+</body>
+</html>

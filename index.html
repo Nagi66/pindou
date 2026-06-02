@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>拼豆模拟器-自适应优化</title>
+    <title>拼豆模拟器-手机横向滚动色卡</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
         body{height:100vh;overflow:hidden;display:flex}
@@ -39,7 +39,7 @@
             width:20px;height:20px;background:#fff;cursor:pointer;
         }
 
-        /*手机布局 <768px */
+        /*手机布局 <768px 关键修改：色卡单行横向滚动*/
         @media(max-width:768px){
             body{height:auto;overflow:auto}
             .wrap-all{flex-direction:column;height:auto}
@@ -48,11 +48,17 @@
                 width:100%;flex-direction:row;flex-wrap:wrap
             }
             .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
-            /*色卡整行自动横向铺满，不再固定2列*/
-            .color-side{width:100%}
+            /*色卡整行横向单行、横向滚动，不再换行多行*/
+            .color-side{
+                width:100%;
+                overflow-x:auto;
+                overflow-y:hidden;
+            }
             .color-list{
-                grid-template-columns: repeat(auto-fill,52px);
-                justify-content:start;
+                display:flex;
+                flex-wrap:nowrap;
+                gap:8px;
+                width:max-content;
             }
         }
     </style>

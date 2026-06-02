@@ -18,7 +18,7 @@ body{height:100vh;overflow:hidden;display:flex}
 
 /* 2.左侧分类TAB栏样式 */
 .tab-big{
-    width:70px;background:#f2f2f2;display:flex;column-gap:flex;flex-direction:column;
+    width:70px;background:#f2f7f7;display:flex;flex-direction:column;
 }
 .tab-item{
     padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
@@ -148,7 +148,7 @@ body{height:100vh;overflow:hidden;display:flex}
         <div class="toolbar">
             <button class="undo-btn" id="undoBtn" title="撤销">←</button>
             <button class="redo-btn" id="redoBtn" title="重做">→</button>
-            <button class="save-btn" id="saveBtn" title="导出双图+清单">💾</button>
+            <button class="save-btn" id="saveBtn" title="导出全套图纸">💾</button>
         </div>
     </div>
 </div>
@@ -160,9 +160,14 @@ body{height:100vh;overflow:hidden;display:flex}
 -------------------------- */
 let currentType = "A";
 let currentColor = "#FFFFFF";
+let currentCode = "A01";
+
 let history = [];
 let redoStack = [];
 const MAX_HISTORY = 50;
+
+let cellCodeList = [];
+
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
 const saveBtn = document.getElementById('saveBtn');
@@ -180,7 +185,7 @@ function setRing(el,color){
 }
 
 /* --------------------------
-颜色面板渲染
+颜色面板渲染（MARD真实色号）
 -------------------------- */
 function renderColors(type){
     const box = document.getElementById("colorBox");
@@ -191,6 +196,7 @@ function renderColors(type){
         item.innerHTML=`<div class="color-name">${code}</div><div class="color-block" style="background:${hex}" title="${code}"></div>`;
         item.onclick=()=>{
             currentColor=hex;
+            currentCode=code;
             document.querySelectorAll(".color-block").forEach(b=>b.style.outline="none");
             item.querySelector(".color-block").style.outline="2px solid #333";
         };
@@ -207,6 +213,7 @@ function createGrid(size){
     grid.style.gridTemplateColumns=`repeat(${size},20px)`;
     history = [];
     redoStack = [];
+    cellCodeList = new Array(size*size).fill("");
 
     for(let i=0;i<size*size;i++){
         const cell=document.createElement("div");
@@ -216,9 +223,12 @@ function createGrid(size){
         cell.onclick = function(){
             saveHistory();
             redoStack = [];
-            if(this.style.background){
+            const idx = +this.dataset.index;
+            if(cellCodeList[idx]){
+                cellCodeList[idx] = "";
                 this.style.removeProperty('background');
             }else{
+                cellCodeList[idx] = currentCode;
                 setRing(this, currentColor);
             }
             updateBtnState();
@@ -232,125 +242,183 @@ function createGrid(size){
 撤销/重做 基础逻辑
 -------------------------- */
 function saveHistory(){
-    const cells = document.querySelectorAll('.cell');
-    const state = Array.from(cells).map(c => c.style.background);
-    history.push(state);
+    history.push([...cellCodeList]);
     if(history.length > MAX_HISTORY) history.shift();
 }
-function getNowState(){
-    return Array.from(document.querySelectorAll('.cell')).map(c=>c.style.background);
-}
-function applyState(state){
+function applyHistory(list){
+    cellCodeList = [...list];
     const cells = document.querySelectorAll('.cell');
     cells.forEach((c,i)=>{
-        if(state[i]) c.style.background = state[i];
-        else c.style.removeProperty('background');
-    })
+        const code = cellCodeList[i];
+        if(code){
+            const hex = getHexByCode(code);
+            setRing(c, hex);
+        }else{
+            c.style.removeProperty('background');
+        }
+    });
+}
+function getHexByCode(code){
+    for(const k in colorData){
+        const find = colorData[k].find(x=>x[0]===code);
+        if(find) return find[1];
+    }
+    return "#ccc";
 }
 function undo(){
     if(history.length===0)return;
-    redoStack.push(getNowState());
-    applyState(history.pop());
+    redoStack.push([...cellCodeList]);
+    applyHistory(history.pop());
     updateBtnState();
 }
 function redo(){
     if(redoStack.length===0)return;
-    history.push(getNowState());
+    history.push([...cellCodeList]);
     if(history.length>MAX_HISTORY)history.shift();
-    applyState(redoStack.pop());
+    applyHistory(redoStack.pop());
     updateBtnState();
 }
 
 /* --------------------------
-导出：统计 + 双图 + 清单
+导出：合并图 + 网格 + 正确色号
 -------------------------- */
 async function exportAll(){
-    const size = Math.sqrt(document.querySelectorAll('.cell').length);
-    const state = getNowState();
+    const size = Math.sqrt(cellCodeList.length);
+    const list = [...cellCodeList];
+
     const stats = {};
     let total = 0;
-
-    for(let s of state){
-        if(!s) continue;
-        const [code] = Object.entries(colorData).flatMap(([k,arr])=>arr.filter(x=>x[1]===s)).map(x=>x[0]) || ["未知"];
-        stats[code] = (stats[code]||0)+1;
+    for(const c of list){
+        if(!c) continue;
+        stats[c] = (stats[c]||0)+1;
         total++;
     }
-
     const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-    const info1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
-    const info2 = sorted.map(c=>`■${c}(${stats[c]})`).join(' ');
+
+    const infoLine1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
+    const infoLine2 = sorted.map(c=>{
+        const h = getHexByCode(c);
+        return `<span style="display:inline-block;width:14px;height:14px;background:${h};margin-right:4px;"></span>${c}(${stats[c]})`;
+    }).join(' ');
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const FIXED_WIDTH = 1000;
+    const FIXED_W = 1000;
     const PAD = 40;
-    const BOTTOM_H = 80;
-    const gridSize = Math.floor((FIXED_WIDTH - PAD*2) / size);
-    const imgW = FIXED_WIDTH;
-    const imgH = PAD*2 + gridSize*size + BOTTOM_H;
+    const BOTTOM_H = 90;
+    const gridSize = Math.floor((FIXED_W - PAD*2)/size);
+    const oneImageH = PAD*2 + gridSize*size;
+    const totalH = oneImageH*2 + BOTTOM_H;
 
-    canvas.width = imgW;
-    canvas.height = imgH;
+    canvas.width = FIXED_W;
+    canvas.height = totalH;
 
-    // 绘制通用背景+坐标+底部黑栏
-    function drawBase(){
-        ctx.fillStyle='#fff';ctx.fillRect(0,0,imgW,imgH);
-        ctx.fillStyle='#f7f7f7';ctx.fillRect(PAD,PAD,gridSize*size,gridSize*size);
-        ctx.fillStyle='#222';ctx.fillRect(0,imgH-BOTTOM_H,imgW,BOTTOM_H);
-        ctx.fillStyle='#fff';ctx.font='14px sans-serif';
-        ctx.fillText(info1,15,imgH-BOTTOM_H+22);
-        ctx.fillText(info2,15,imgH-BOTTOM_H+50);
-        ctx.font='12px sans-serif';ctx.fillStyle='#000';
-        for(let i=0;i<size;i++){
-            ctx.fillText(i+1,PAD+gridSize*(i+0.5)-5,PAD-8);
-            ctx.fillText(i+1,PAD-25,PAD+gridSize*(i+0.5)+4);
-        }
-    }
+    // 底色白
+    ctx.fillStyle="#fff";
+    ctx.fillRect(0,0,FIXED_W,totalH);
 
-    // 图1：圆形效果图
-    drawBase();
+    // ========== 上半区：效果图 ==========
+    drawCoordAndGrid(PAD, PAD, size, gridSize);
     for(let i=0;i<size;i++){
         for(let j=0;j<size;j++){
             const idx = i*size+j;
+            const code = list[idx];
+            if(!code) continue;
+            const hex = getHexByCode(code);
             const x = PAD + j*gridSize;
             const y = PAD + i*gridSize;
-            if(state[idx]){
-                ctx.fillStyle=state[idx].match(/rgb.*?\)/)[0];
-                ctx.beginPath();ctx.arc(x+gridSize/2,y+gridSize/2,gridSize/2,0,Math.PI*2);ctx.fill();
-                ctx.fillStyle='#f7f7f7';
-                ctx.beginPath();ctx.arc(x+gridSize/2,y+gridSize/2,gridSize*0.25,0,Math.PI*2);ctx.fill();
-            }
+            ctx.fillStyle=hex;
+            ctx.beginPath();
+            ctx.arc(x+gridSize/2, y+gridSize/2, gridSize/2, 0,Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle="#f7f7f7";
+            ctx.beginPath();
+            ctx.arc(x+gridSize/2, y+gridSize/2, gridSize*0.25,0,Math.PI*2);
+            ctx.fill();
         }
     }
-    await download(canvas,`拼豆效果图_${new Date().getTime()}.png`);
 
-    // 图2：方格色号图
-    canvas.width=imgW;
-    drawBase();
+    // ========== 下半区：方块图 ==========
+    const offsetY = oneImageH;
+    drawCoordAndGrid(PAD, PAD+offsetY, size, gridSize);
     for(let i=0;i<size;i++){
         for(let j=0;j<size;j++){
             const idx = i*size+j;
+            const code = list[idx];
+            if(!code) continue;
+            const hex = getHexByCode(code);
             const x = PAD + j*gridSize;
-            const y = PAD + i*gridSize;
-            if(state[idx]){
-                ctx.fillStyle=state[idx].match(/rgb.*?\)/)[0];
-                ctx.fillRect(x,y,gridSize,gridSize);
-                ctx.fillStyle='#fff';ctx.font='12px monospace';
-                const code = sorted.find(c=>colorData[c[0]].some(x=>x[1]===state[idx]))||"";
-                ctx.fillText(code,x+4,y+15);
-            }
+            const y = PAD + offsetY + i*gridSize;
+            ctx.fillStyle=hex;
+            ctx.fillRect(x,y,gridSize,gridSize);
+            ctx.fillStyle="#fff";
+            ctx.font="12px monospace";
+            ctx.fillText(code, x+4, y+15);
         }
     }
-    await download(canvas,`方格标注图纸_${new Date().getTime()}.png`);
+
+    // ========== 底部信息栏 ==========
+    ctx.fillStyle="#222";
+    ctx.fillRect(0, totalH-BOTTOM_H, FIXED_W, BOTTOM_H);
+    ctx.fillStyle="#fff";
+    ctx.font="16px sans-serif";
+    ctx.fillText(infoLine1, 16, totalH-BOTTOM_H+28);
+    ctx.font="14px sans-serif";
+    wrapText(infoLine2.replace(/<[^>]+>/g,''), 16, totalH-BOTTOM_H+58, FIXED_W-32, 20);
+
+    // 下载图片
+    await download(canvas, `拼豆全套图纸_${new Date().getTime()}.png`);
 
     // TXT清单
     const txt = `拼豆用料清单\n尺寸：${size}×${size}\n时间：${new Date().toLocaleString()}\n\n${sorted.map(c=>`${c}：${stats[c]}颗`).join('\n')}\n\n总计：${total}颗`;
-    const blob = new Blob([txt],{type:'text/plain'});
+    const blob = new Blob([txt], {type:'text/plain'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href=url;a.download=`用料清单_${new Date().getTime()}.txt`;
-    a.click();URL.revokeObjectURL(url);
+    a.href=url; a.download=`用料清单_${new Date().getTime()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// 绘制坐标 + 浅灰网格
+function drawCoordAndGrid(ox, oy, size, gs){
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle="#ddd";
+    ctx.lineWidth=1;
+    for(let i=0;i<=size;i++){
+        ctx.beginPath();
+        ctx.moveTo(ox+i*gs, oy);
+        ctx.lineTo(ox+i*gs, oy+size*gs);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(ox, oy+i*gs);
+        ctx.lineTo(ox+size*gs, oy+i*gs);
+        ctx.stroke();
+    }
+    ctx.fillStyle="#000";
+    ctx.font="12px sans-serif";
+    for(let i=0;i<size;i++){
+        ctx.fillText(i+1, ox+gs*(i+0.5)-6, oy-8);
+        ctx.fillText(i+1, ox-22, oy+gs*(i+0.5)+4);
+    }
+}
+
+// 文字自动换行
+function wrapText(text, x, y, maxW, lineH){
+    const words = text.split(' ');
+    let line = '';
+    let yy = y;
+    for(const w of words){
+        const test = line + w + ' ';
+        const metrics = ctx.measureText(test);
+        if(metrics.width>maxW && line){
+            ctx.fillText(line, x, yy);
+            line = w + ' ';
+            yy += lineH;
+        }else{
+            line = test;
+        }
+    }
+    if(line) ctx.fillText(line, x, yy);
 }
 
 function download(canvas,name){

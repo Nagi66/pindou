@@ -314,11 +314,10 @@ function exportAll(){
     canvas.width = FIXED_W;
     canvas.height = totalH;
 
-    // 底色白
     ctx.fillStyle="#fff";
     ctx.fillRect(0,0,FIXED_W,totalH);
 
-    // ========== 上半区：效果图 ==========
+    // 上 圆形效果图
     drawCoordAndGrid(PAD, PAD, size, gridSize);
     for(let i=0;i<size;i++){
         for(let j=0;j<size;j++){
@@ -339,7 +338,7 @@ function exportAll(){
         }
     }
 
-    // ========== 下半区：方块图 ==========
+    // 下 方块编号图
     const offsetY = oneImageH;
     drawCoordAndGrid(PAD, PAD+offsetY, size, gridSize);
     for(let i=0;i<size;i++){
@@ -358,7 +357,7 @@ function exportAll(){
         }
     }
 
-    // ========== 底部信息栏 ==========
+    // 底部文字栏
     ctx.fillStyle="#222";
     ctx.fillRect(0, totalH-BOTTOM_H, FIXED_W, BOTTOM_H);
     ctx.fillStyle="#fff";
@@ -367,23 +366,10 @@ function exportAll(){
     ctx.font="14px sans-serif";
     wrapText(infoLine2, 16, totalH-BOTTOM_H+58, FIXED_W-32, 20);
 
-    // 下载图片
-    download(canvas, `拼豆全套图纸_${new Date().getTime()}.png`);
-
-    // TXT清单
-    const txt = `拼豆用料清单\n尺寸：${size}×${size}\n时间：${new Date().toLocaleString()}\n\n${sorted.map(c=>`${c}：${stats[c]}颗`).join('\n')}\n\n总计：${total}颗`;
-    const blob = new Blob([txt], {type:'text/plain'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href=url; a.download=`用料清单_${new Date().getTime()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function download(canvas,name){
+    // 只下载图片，删掉txt相关代码
     const a=document.createElement('a');
     a.href = canvas.toDataURL("image/png");
-    a.download = name;
+    a.download = `拼豆图纸_${new Date().getTime()}.png`;
     a.click();
 }
 

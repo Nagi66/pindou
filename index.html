@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>拼豆模拟器-手机横向滚动色卡</title>
+    <title>拼豆模拟器</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
         body{height:100vh;overflow:hidden;display:flex}
@@ -35,20 +35,20 @@
         .size-btn.active{background:#333;color:#fff;border-color:#333}
         .canvas-box{flex:1;padding:10px;overflow:auto;background:#f7f7f7}
         #grid{display:grid;gap:3px;width:fit-content}
+        /*空白格子：缩小30%淡灰色原点 22.4% #ccc浅灰*/
         .cell{
-            width:20px;height:20px;background:#fff;cursor:pointer;
+            width:20px;height:20px;cursor:pointer;border-radius:50%;
+            background:#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%);
         }
 
-        /*手机布局 <768px 关键修改：色卡单行横向滚动*/
+        /*手机布局 <768px 色卡单行横向滚动*/
         @media(max-width:768px){
             body{height:auto;overflow:auto}
             .wrap-all{flex-direction:column;height:auto}
-            /*顶部大类横向铺满自动换行*/
             .tab-big{
                 width:100%;flex-direction:row;flex-wrap:wrap
             }
             .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
-            /*色卡整行横向单行、横向滚动，不再换行多行*/
             .color-side{
                 width:100%;
                 overflow-x:auto;
@@ -165,6 +165,11 @@ H: [
 let currentType = "A";
 let currentColor = "#FFFFFF";
 
+//原内径50%，缩小40% → 50*0.6 = 30%，中间透明30%，外圈有色70%
+function setRing(el,color){
+    el.style.background=`radial-gradient(transparent 30%, ${color} 31%)`;
+}
+
 function renderColors(type){
     const box = document.getElementById("colorBox");
     box.innerHTML = "";
@@ -196,7 +201,7 @@ function createGrid(size){
     for(let i=0;i<size*size;i++){
         const cell=document.createElement("div");
         cell.className="cell";
-        cell.onclick=()=>cell.style.background=currentColor;
+        cell.onclick=()=>setRing(cell,currentColor);
         grid.appendChild(cell);
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自适应拼豆模拟器 空心圆环</title>
+    <title>拼豆模拟器-自适应优化</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
         body{height:100vh;overflow:hidden;display:flex}
@@ -16,7 +16,7 @@
             padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
         }
         .tab-item.active{background:#333;color:#fff}
-        /*色卡侧边*/
+        /*色卡侧边 PC两列*/
         .color-side{
             width:130px;padding:10px;background:#f9f9f9;overflow-y:auto;
         }
@@ -35,22 +35,25 @@
         .size-btn.active{background:#333;color:#fff;border-color:#333}
         .canvas-box{flex:1;padding:10px;overflow:auto;background:#f7f7f7}
         #grid{display:grid;gap:3px;width:fit-content}
-        /*拼豆：外圆整体，中间镂空占直径1/3 → 半径33.3%*/
         .cell{
-            width:20px;height:20px;border-radius:50%;cursor:pointer;
-            /*中心镂空半径1/3，外圈上色*/
-            background: radial-gradient(circle 33.3% at center, transparent 0 33.3%, currentColor 33.4% 100%);
-            color:#ffffff;
+            width:20px;height:20px;background:#fff;cursor:pointer;
         }
-        /*手机布局*/
+
+        /*手机布局 <768px */
         @media(max-width:768px){
             body{height:auto;overflow:auto}
             .wrap-all{flex-direction:column;height:auto}
+            /*顶部大类横向铺满自动换行*/
             .tab-big{
                 width:100%;flex-direction:row;flex-wrap:wrap
             }
             .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
+            /*色卡整行自动横向铺满，不再固定2列*/
             .color-side{width:100%}
+            .color-list{
+                grid-template-columns: repeat(auto-fill,52px);
+                justify-content:start;
+            }
         }
     </style>
 </head>
@@ -187,7 +190,7 @@ function createGrid(size){
     for(let i=0;i<size*size;i++){
         const cell=document.createElement("div");
         cell.className="cell";
-        cell.onclick=()=>cell.style.color=currentColor;
+        cell.onclick=()=>cell.style.background=currentColor;
         grid.appendChild(cell);
     }
 }

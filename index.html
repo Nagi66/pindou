@@ -6,17 +6,10 @@
     <title>拼豆模拟器</title>
 
 <style>
-/* ========== CSS总区块：页面所有外观样式 ========== */
-/* 改豆子间距、豆子大小、圆环底色、手机排版全部在这里修改 */
-
-
-/* 1.全局通用基础样式 */
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
 body{height:100vh;overflow:hidden;display:flex}
 .wrap-all{display:flex;width:100%;height:100%}
 
-
-/* 2.左侧分类TAB栏样式 */
 .tab-big{
     width:70px;background:#f2f7f7;display:flex;flex-direction:column;
 }
@@ -25,8 +18,6 @@ body{height:100vh;overflow:hidden;display:flex}
 }
 .tab-item.active{background:#333;color:#fff}
 
-
-/* 3.右侧色卡面板样式 */
 .color-side{
     width:130px;padding:10px;background:#f9f9f9;overflow-y:auto;
 }
@@ -39,31 +30,21 @@ body{height:100vh;overflow:hidden;display:flex}
 .color-name{font-size:11px;margin-bottom:4px}
 .color-block{width:42px;height:42px;border:1px solid #aaa;border-radius:50%}
 
-
-/* 4.画布主体、格子样式【改豆子间距：#grid里gap数值】 */
 .main-canvas{flex:1;display:flex;flex-direction:column}
 .size-bar{padding:10px;border-bottom:1px solid #ddd}
 .size-btn{padding:5px 8px;margin:0 3px;border:1px solid #999;background:#fff;cursor:pointer}
 .size-btn.active{background:#333;color:#fff;border-color:#333}
 .canvas-box{
-    flex:1;
-    padding:10px;
-    overflow:auto;
-    background:#f7f7f7;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    flex:1;padding:10px;overflow:auto;background:#f7f7f7;
+    display:flex;align-items:center;justify-content:center;
 }
 #grid{display:grid;gap:1px;width:fit-content}
-/* gap:1px = 豆子之间空隙，修改数字即可调整间距 */
 
-/* 空白单个拼豆格子默认样式 */
 .cell{
     width:20px;height:20px;cursor:pointer;border-radius:50%;
     background:#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%);
 }
 
-/* ========== 底部工具栏 黑色80% 底色 ========== */
 .toolbar{
     padding:10px;
     background: rgba(0, 0, 0, 0.8);
@@ -71,48 +52,44 @@ body{height:100vh;overflow:hidden;display:flex}
     gap:8px;
     align-items:center;
 }
-.undo-btn,.redo-btn,.save-btn{
-    width:40px;
+.undo-btn,.redo-btn,.saveImgBtn,.saveDraftBtn{
     height:40px;
     border-radius:12px;
     border:none;
     background:rgba(255,255,255,0.5);
-    color:#ffffff;
-    font-size:18px;
+    color:#fff;
     cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    padding:0 10px;
 }
-.save-btn{font-size:20px;}
 .undo-btn:disabled,.redo-btn:disabled{
     background:rgba(255,255,255,0.2);
     color:rgba(255,255,255,0.5);
     cursor:not-allowed;
 }
-.undo-btn:hover:not(:disabled),.redo-btn:hover:not(:disabled),.save-btn:hover:not(:disabled){
+.undo-btn:hover:not(:disabled),.redo-btn:hover:not(:disabled),
+.saveImgBtn:hover,.saveDraftBtn:hover{
     background:rgba(255,255,255,0.65);
 }
 
-/* 5.手机端自适应样式 */
+/*预览遮罩弹窗*/
+.previewMask{
+    position:fixed;left:0;top:0;width:100vw;height:100vh;
+    background:rgba(0,0,0,0.75);
+    z-index:999;
+    display:none;
+    align-items:center;justify-content:center;
+}
+.previewImg{
+    max-width:92vw;max-height:92vh;border:8px solid #fff;
+}
+
 @media(max-width:768px){
     body{height:auto;overflow:auto}
     .wrap-all{flex-direction:column;height:auto}
-    .tab-big{
-        width:100%;flex-direction:row;flex-wrap:wrap
-    }
+    .tab-big{width:100%;flex-direction:row;flex-wrap:wrap}
     .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
-    .color-side{
-        width:100%;
-        overflow-x:auto;
-        overflow-y:hidden;
-    }
-    .color-list{
-        display:flex;
-        flex-wrap:nowrap;
-        gap:8px;
-        width:max-content;
-    }
+    .color-side{width:100%;overflow-x:auto;overflow-y:hidden}
+    .color-list{display:flex;flex-wrap:nowrap;gap:8px;width:max-content;}
 }
 </style>
 </head>
@@ -145,49 +122,46 @@ body{height:100vh;overflow:hidden;display:flex}
         <div class="canvas-box">
             <div id="grid"></div>
         </div>
-
         <div class="toolbar">
-            <button class="undo-btn" id="undoBtn" title="撤销">←</button>
-            <button class="redo-btn" id="redoBtn" title="重做">→</button>
-            <button class="save-btn" id="saveBtn" title="导出全套图纸">💾</button>
+            <button class="undo-btn" id="undoBtn" title="撤销">←撤销</button>
+            <button class="redo-btn" id="redoBtn" title="重做">→重做</button>
+            <button class="saveImgBtn" id="saveImgBtn">保存效果图</button>
+            <button class="saveDraftBtn" id="saveDraftBtn">保存图纸</button>
         </div>
     </div>
 </div>
 
+<div class="previewMask" id="previewMask">
+    <img class="previewImg" id="previewImgEle">
+</div>
+
 <script src="color.js"></script>
 <script>
-/* --------------------------
-全局变量
--------------------------- */
 let currentType = "A";
 let currentColor = "#FFFFFF";
 let currentCode = "A01";
-
 let history = [];
 let redoStack = [];
 const MAX_HISTORY = 50;
-
 let cellCodeList = [];
 
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
-const saveBtn = document.getElementById('saveBtn');
+const saveImgBtn = document.getElementById('saveImgBtn');
+const saveDraftBtn = document.getElementById('saveDraftBtn');
+const previewMask = document.getElementById('previewMask');
+const previewImgEle = document.getElementById('previewImgEle');
 
+previewMask.onclick = e=>{
+    if(e.target === previewMask) previewMask.style.display = 'none';
+}
 function updateBtnState(){
     undoBtn.disabled = history.length === 0;
     redoBtn.disabled = redoStack.length === 0;
 }
-
-/* --------------------------
-拼豆渲染样式
--------------------------- */
 function setRing(el,color){
     el.style.background=`radial-gradient(transparent 25%, ${color} 25%)`;
 }
-
-/* --------------------------
-颜色面板渲染（MARD真实色号）
--------------------------- */
 function renderColors(type){
     const box = document.getElementById("colorBox");
     box.innerHTML = "";
@@ -204,26 +178,18 @@ function renderColors(type){
         box.appendChild(item);
     })
 }
-
-/* --------------------------
-画板创建
--------------------------- */
 function createGrid(size){
     const grid=document.getElementById("grid");
     grid.innerHTML="";
     grid.style.gridTemplateColumns=`repeat(${size},20px)`;
-    history = [];
-    redoStack = [];
+    history = [];redoStack = [];
     cellCodeList = new Array(size*size).fill("");
-
     for(let i=0;i<size*size;i++){
         const cell=document.createElement("div");
         cell.className="cell";
         cell.dataset.index = i;
-
         cell.onclick = function(){
-            saveHistory();
-            redoStack = [];
+            saveHistory();redoStack = [];
             const idx = +this.dataset.index;
             if(cellCodeList[idx]){
                 cellCodeList[idx] = "";
@@ -238,10 +204,6 @@ function createGrid(size){
     }
     updateBtnState();
 }
-
-/* --------------------------
-撤销/重做 基础逻辑
--------------------------- */
 function saveHistory(){
     history.push([...cellCodeList]);
     if(history.length > MAX_HISTORY) history.shift();
@@ -254,9 +216,7 @@ function applyHistory(list){
         if(code){
             const hex = getHexByCode(code);
             setRing(c, hex);
-        }else{
-            c.style.removeProperty('background');
-        }
+        }else c.style.removeProperty('background');
     });
 }
 function getHexByCode(code){
@@ -279,155 +239,118 @@ function redo(){
     applyHistory(redoStack.pop());
     updateBtnState();
 }
-
-/* --------------------------
-导出：合并图 + 网格 + 正确色号【修复版】
--------------------------- */
-function exportAll(){
-    const size = Math.sqrt(cellCodeList.length);
-    const list = [...cellCodeList];
-
-    const stats = {};
-    let total = 0;
-    for(const c of list){
-        if(!c) continue;
-        stats[c] = (stats[c]||0)+1;
-        total++;
-    }
-    const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-
-    const infoLine1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
-    const infoLine2 = sorted.map(c=>{
-        const h = getHexByCode(c);
-        return `${c}(${stats[c]})`;
-    }).join(' ');
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const FIXED_W = 1000;
-    const PAD = 40;
-    const BOTTOM_H = 90;
-    const gridSize = Math.floor((FIXED_W - PAD*2)/size);
-    const oneImageH = PAD*2 + gridSize*size;
-    const totalH = oneImageH*2 + BOTTOM_H;
-
-    canvas.width = FIXED_W;
-    canvas.height = totalH;
-
-    ctx.fillStyle="#fff";
-    ctx.fillRect(0,0,FIXED_W,totalH);
-
-    // 上 圆形效果图
-    drawCoordAndGrid(PAD, PAD, size, gridSize);
-    for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-            const idx = i*size+j;
-            const code = list[idx];
-            if(!code) continue;
-            const hex = getHexByCode(code);
-            const x = PAD + j*gridSize;
-            const y = PAD + i*gridSize;
-            ctx.fillStyle=hex;
-            ctx.beginPath();
-            ctx.arc(x+gridSize/2, y+gridSize/2, gridSize/2, 0,Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle="#f7f7f7";
-            ctx.beginPath();
-            ctx.arc(x+gridSize/2, y+gridSize/2, gridSize*0.25,0,Math.PI*2);
-            ctx.fill();
-        }
-    }
-
-    // 下 方块编号图
-    const offsetY = oneImageH;
-    drawCoordAndGrid(PAD, PAD+offsetY, size, gridSize);
-    for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-            const idx = i*size+j;
-            const code = list[idx];
-            if(!code) continue;
-            const hex = getHexByCode(code);
-            const x = PAD + j*gridSize;
-            const y = PAD + offsetY + i*gridSize;
-            ctx.fillStyle=hex;
-            ctx.fillRect(x,y,gridSize,gridSize);
-            ctx.fillStyle="#fff";
-            ctx.font="12px monospace";
-            ctx.fillText(code, x+4, y+15);
-        }
-    }
-
-    // 底部文字栏
-    ctx.fillStyle="#222";
-    ctx.fillRect(0, totalH-BOTTOM_H, FIXED_W, BOTTOM_H);
-    ctx.fillStyle="#fff";
-    ctx.font="16px sans-serif";
-    ctx.fillText(infoLine1, 16, totalH-BOTTOM_H+28);
-    ctx.font="14px sans-serif";
-    wrapText(infoLine2, 16, totalH-BOTTOM_H+58, FIXED_W-32, 20);
-
-    // 只下载图片，删掉txt相关代码
-    const a=document.createElement('a');
-    a.href = canvas.toDataURL("image/png");
-    a.download = `拼豆图纸_${new Date().getTime()}.png`;
-    a.click();
-}
-
-// 绘制坐标 + 浅灰网格
-function drawCoordAndGrid(ox, oy, size, gs){
-    const ctx = canvas.getContext('2d');
-    ctx.strokeStyle="#ddd";
-    ctx.lineWidth=1;
+function drawCoordAndGrid(ox, oy, size, gs, ctx){
+    ctx.strokeStyle="#ddd";ctx.lineWidth=1;
     for(let i=0;i<=size;i++){
-        ctx.beginPath();
-        ctx.moveTo(ox+i*gs, oy);
-        ctx.lineTo(ox+i*gs, oy+size*gs);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(ox, oy+i*gs);
-        ctx.lineTo(ox+size*gs, oy+i*gs);
-        ctx.stroke();
+        ctx.beginPath();ctx.moveTo(ox+i*gs, oy);ctx.lineTo(ox+i*gs, oy+size*gs);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(ox, oy+i*gs);ctx.lineTo(ox+size*gs, oy+i*gs);ctx.stroke();
     }
-    ctx.fillStyle="#000";
-    ctx.font="12px sans-serif";
+    ctx.fillStyle="#000";ctx.font="12px sans-serif";
     for(let i=0;i<size;i++){
         ctx.fillText(i+1, ox+gs*(i+0.5)-6, oy-8);
         ctx.fillText(i+1, ox-22, oy+gs*(i+0.5)+4);
     }
 }
-
-// 文字自动换行
-function wrapText(text, x, y, maxW, lineH){
+function wrapText(text, x, y, maxW, lineH, ctx){
     const words = text.split(' ');
-    let line = '';
-    let yy = y;
+    let line = '', yy = y;
     for(const w of words){
         const test = line + w + ' ';
         const metrics = ctx.measureText(test);
         if(metrics.width>maxW && line){
             ctx.fillText(line, x, yy);
-            line = w + ' ';
-            yy += lineH;
-        }else{
-            line = test;
-        }
+            line = w + ' '; yy += lineH;
+        }else line = test;
     }
     if(line) ctx.fillText(line, x, yy);
 }
 
-function download(canvas,name){
-    return new Promise(res=>{
-        canvas.toBlob(b=>{
-            const a=document.createElement('a');
-            a.href=URL.createObjectURL(b);a.download=name;a.click();
-            URL.revokeObjectURL(a.href);res();
-        });
-    });
+// 1、仅生成圆形效果图
+function previewEffectImg(){
+    const size = Math.sqrt(cellCodeList.length);
+    const list = [...cellCodeList];
+    const stats = {};let total=0;
+    for(let c of list){if(c){stats[c]=(stats[c]||0)+1;total++}}
+    const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    const info1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
+    const info2 = sorted.map(c=>`${c}(${stats[c]})`).join(' ');
+
+    const FIXED_W = 900,PAD=35,BOTTOM=70;
+    const gridSize = Math.floor((FIXED_W-PAD*2)/size);
+    const H = PAD*2 + gridSize*size + BOTTOM;
+    const cvs = document.createElement('canvas');
+    const ctx = cvs.getContext('2d');
+    cvs.width=FIXED_W;cvs.height=H;
+    ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
+    drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
+    for(let i=0;i<size;i++){
+        for(let j=0;j<size;j++){
+            const idx=i*size+j;const cd=list[idx];
+            if(!cd)continue;
+            const col=getHexByCode(cd);
+            const x=PAD+j*gridSize+gridSize/2;
+            const y=PAD+i*gridSize+gridSize/2;
+            ctx.fillStyle=col;
+            ctx.beginPath();ctx.arc(x,y,gridSize/2,0,Math.PI*2);ctx.fill();
+            ctx.fillStyle="#f7f7f7";
+            ctx.beginPath();ctx.arc(x,y,gridSize*0.25,0,Math.PI*2);ctx.fill();
+        }
+    }
+    //底部文字栏
+    ctx.fillStyle="#222";ctx.fillRect(0,H-BOTTOM,FIXED_W,BOTTOM);
+    ctx.fillStyle="#fff";ctx.font="16px sans-serif";
+    ctx.fillText(info1,15,H-BOTTOM+26);
+    ctx.font="14px sans-serif";
+    wrapText(info2,15,H-BOTTOM+54,FIXED_W-30,20,ctx);
+
+    previewImgEle.src = cvs.toDataURL("image/png");
+    previewMask.style.display="flex";
 }
 
-/* --------------------------
-事件绑定
--------------------------- */
+//2、方块编号图纸
+function previewDraftImg(){
+    const size = Math.sqrt(cellCodeList.length);
+    const list = [...cellCodeList];
+    const stats = {};let total=0;
+    for(let c of list){if(c){stats[c]=(stats[c]||0)+1;total++}}
+    const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    const info1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
+    const info2 = sorted.map(c=>`${c}(${stats[c]})`).join(' ');
+
+    const FIXED_W = 900,PAD=35,BOTTOM=70;
+    const gridSize = Math.floor((FIXED_W-PAD*2)/size);
+    const H = PAD*2 + gridSize*size + BOTTOM;
+    const cvs = document.createElement('canvas');
+    const ctx = cvs.getContext('2d');
+    cvs.width=FIXED_W;cvs.height=H;
+    ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
+    drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
+    for(let i=0;i<size;i++){
+        for(let j=0;j<size;j++){
+            const idx=i*size+j;const cd=list[idx];
+            if(!cd)continue;
+            const col=getHexByCode(cd);
+            const x=PAD+j*gridSize;
+            const y=PAD+i*gridSize;
+            ctx.fillStyle=col;ctx.fillRect(x,y,gridSize,gridSize);
+            ctx.fillStyle="#fff";ctx.font="12px monospace";
+            ctx.fillText(cd,x+3,y+14);
+        }
+    }
+    ctx.fillStyle="#222";ctx.fillRect(0,H-BOTTOM,FIXED_W,BOTTOM);
+    ctx.fillStyle="#fff";ctx.font="16px sans-serif";
+    ctx.fillText(info1,15,H-BOTTOM+26);
+    ctx.font="14px sans-serif";
+    wrapText(info2,15,H-BOTTOM+54,FIXED_W-30,20,ctx);
+
+    previewImgEle.src = cvs.toDataURL("image/png");
+    previewMask.style.display="flex";
+}
+
+//绑定按钮
+saveImgBtn.onclick=previewEffectImg;
+saveDraftBtn.onclick=previewDraftImg;
+undoBtn.onclick=undo;redoBtn.onclick=redo;
 document.getElementById("tabWrap").onclick = e=>{
     if(e.target.classList.contains("tab-item")){
         document.querySelectorAll(".tab-item").forEach(t=>t.classList.remove("active"));
@@ -443,13 +366,8 @@ document.querySelector(".size-bar").onclick = e=>{
         createGrid(+e.target.dataset.num);
     }
 }
-undoBtn.onclick=undo;
-redoBtn.onclick=redo;
-saveBtn.onclick=exportAll;
 
-/* --------------------------
-初始化
--------------------------- */
+//初始化
 renderColors(currentType);
 createGrid(15);
 </script>

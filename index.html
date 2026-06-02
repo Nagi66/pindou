@@ -43,8 +43,9 @@ body{height:100vh;overflow:hidden;display:flex}
     transform:translate(-50%,-50%);
     font-size:12px;
     font-weight:normal;
-    color:#000;                     /* 纯黑色字体 */
-    text-shadow:3px 0 #fff,-3px 0 #fff,0 3px #fff,0 -3px #fff;        /* 1px白色描边（正确写法！不会变白） */
+    color:#000;
+    /* 删除全部text-shadow，改用原生描边 */
+    -webkit-text-stroke:3px #fff;
     z-index:2;
 }
 

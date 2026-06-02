@@ -44,7 +44,7 @@ body{height:100vh;overflow:hidden;display:flex}
     font-size:12px;
     font-weight:normal;
     color:#000;                     /* 纯黑色字体 */
-    text-shadow:0 0 3px #fff;        /* 1px白色描边（正确写法！不会变白） */
+    text-shadow:3px 0 #fff,-3px 0 #fff,0 3px #fff,0 -3px #fff;        /* 1px白色描边（正确写法！不会变白） */
     z-index:2;
 }
 
@@ -202,8 +202,8 @@ let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
 
-const VIEW_HOLE_RATE = 0.20;
-const EXPORT_HOLE_RATE = 0.30;
+const VIEW_HOLE_RATE = 0.24;
+const EXPORT_HOLE_RATE = 0.34;
 
 let audioUnlock = false;
 

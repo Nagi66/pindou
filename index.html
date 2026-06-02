@@ -1,120 +1,227 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>拼豆画板</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%}
-body{display:flex;flex-direction:column}
-.wrap-all{display:flex;flex:1}
-.size-bar{padding:10px;border-bottom:1px solid #ddd}
-.size-btn{padding:5px 8px;margin:0 3px;border:1px solid #999;background:#fff;cursor:pointer}
-.size-btn.active{background:#333;color:#fff;border-color:#333}
-.canvas-box{flex:1;padding:10px;overflow:auto;background:#f7f7f7}
-#grid{display:grid;gap:3px;width:fit-content}
-.cell{
-    width:20px;height:20px;cursor:pointer;border-radius:50%;
-    background:#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%);
-}
-.color-box{width:140px;padding:10px;border-left:1px solid #ddd}
-.color-item{width:24px;height:24px;border-radius:50%;margin:4px;display:inline-block;cursor:pointer;border:2px solid transparent}
-.color-item.active{border-color:#000}
-@media(max-width:768px){
-    body{height:auto;overflow:auto}
-    .wrap-all{flex-direction:column;height:auto}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拼豆模拟器</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+        body{height:100vh;overflow:hidden;display:flex}
+        .wrap-all{display:flex;width:100%;height:100%}
+        .tab-big{
+            width:70px;background:#f2f2f2;display:flex;flex-direction:column;
+        }
+        .tab-item{
+            padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
+        }
+        .tab-item.active{background:#333;color:#fff}
+        .color-side{
+            width:130px;padding:10px;background:#f9f9f9;overflow-y:auto;
+        }
+        .color-list{
+            display:grid;grid-template-columns: repeat(2,52px);gap:8px;justify-content:center;
+        }
+        .color-item{
+            width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;
+        }
+        .color-name{font-size:11px;margin-bottom:4px}
+        .color-block{width:42px;height:42px;border:1px solid #aaa;border-radius:50%}
+        .main-canvas{flex:1;display:flex;flex-direction:column}
+        .size-bar{padding:10px;border-bottom:1px solid #ddd}
+        .size-btn{padding:5px 8px;margin:0 3px;border:1px solid #999;background:#fff;cursor:pointer}
+        .size-btn.active{background:#333;color:#fff;border-color:#333}
+        .canvas-box{flex:1;padding:10px;overflow:auto;background:#f7f7f7}
+        #grid{display:grid;gap:1px;width:fit-content}
+        .cell{
+            width:20px;height:20px;cursor:pointer;border-radius:50%;
+            background:#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%);
+        }
+
+        @media(max-width:768px){
+            body{height:auto;overflow:auto}
+            .wrap-all{flex-direction:column;height:auto}
+            .tab-big{
+                width:100%;flex-direction:row;flex-wrap:wrap
+            }
+            .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
+            .color-side{
+                width:100%;
+                overflow-x:auto;
+                overflow-y:hidden;
+            }
+            .color-list{
+                display:flex;
+                flex-wrap:nowrap;
+                gap:8px;
+                width:max-content;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="size-bar">
-    <button class="size-btn active" data-w="16" data-h="16">16×16</button>
-    <button class="size-btn" data-w="24" data-h="24">24×24</button>
-    <button class="size-btn" data-w="32" data-h="32">32×32</button>
-</div>
 <div class="wrap-all">
-    <div class="canvas-box">
-        <div id="grid"></div>
+    <div class="tab-big" id="tabWrap">
+        <div class="tab-item active" data-type="A">A灰白</div>
+        <div class="tab-item" data-type="B">B棕肤</div>
+        <div class="tab-item" data-type="C">C红色</div>
+        <div class="tab-item" data-type="D">D橙黄</div>
+        <div class="tab-item" data-type="E">E绿色</div>
+        <div class="tab-item" data-type="F">F蓝色</div>
+        <div class="tab-item" data-type="G">G紫玫</div>
+        <div class="tab-item" data-type="H">H灰补</div>
     </div>
-    <div class="color-box" id="colorWrap"></div>
+    <div class="color-side">
+        <div class="color-list" id="colorBox"></div>
+    </div>
+    <div class="main-canvas">
+        <div class="size-bar">
+            <span>尺寸：</span>
+            <button class="size-btn active" data-num="15">15×15</button>
+            <button class="size-btn" data-num="20">20×20</button>
+            <button class="size-btn" data-num="25">25×25</button>
+            <button class="size-btn" data-num="30">30×30</button>
+            <button class="size-btn" data-num="40">40×40</button>
+            <button class="size-btn" data-num="50">50×50</button>
+        </div>
+        <div class="canvas-box">
+            <div id="grid"></div>
+        </div>
+    </div>
 </div>
 
 <script>
-// 配色
-const colorList = ['#000000','#ffffff','#e53935','#43a047','#1e88e5','#fdd835','#8e24aa','#ff7f50'];
-let nowColor = colorList[2];
-let map = [];
-const gridDom = document.getElementById('grid');
-const colorWrap = document.getElementById('colorWrap');
+const colorData = {
+A: [
+    ["A01","#FFFFFF"],["A02","#F5F5DC"],["A03","#E5E5E5"],["A04","#D0D0D0"],["A05","#A9A9A9"],
+    ["A06","#696969"],["A07","#404040"],["A08","#333333"],["A09","#000000"],["A10","#B8B0A8"],
+    ["A11","#98A0A8"],["A12","#C8C8D0"],["A13","#EFEFEF"],["A14","#D1D1D1"],["A15","#BBBCBC"],
+    ["A16","#767777"],["A17","#484949"],["A18","#23282B"],["A19","#A09F9D"],["A20","#9A5516"],
+    ["A21","#F0EBE6"],["A22","#E0D8D0"],["A23","#C0B8B0"],["A24","#D8C8B8"],["A25","#B8A898"],["A26","#988878"]
+],
+B: [
+    ["B01","#FEDBCD"],["B02","#F8C8B0"],["B03","#E8B090"],["B04","#D09070"],["B05","#C08050"],
+    ["B06","#A06040"],["B07","#804020"],["B08","#603010"],["B09","#E0C090"],["B10","#C8A070"],
+    ["B11","#A88050"],["B12","#B08860"],["B13","#D8B898"],["B14","#C0A080"],["B15","#886040"],
+    ["B16","#D0A880"],["B17","#B08860"],["B18","#906840"],["B19","#B07040"],["B20","#704020"],
+    ["B21","#E8C8A0"],["B22","#D8B080"],["B23","#C09060"],["B24","#A07050"],["B25","#805030"],
+    ["B26","#603020"],["B27","#D0B090"],["B28","#B09070"],["B29","#907050"],["B30","#E0A060"],
+    ["B31","#C08040"],["B32","#A06030"]
+],
+C: [
+    ["C01","#FFE0E0"],["C02","#FFC0C0"],["C03","#FF9090"],["C04","#FF6060"],["C05","#F060A0"],
+    ["C06","#E04080"],["C07","#D02060"],["C08","#FF8080"],["C09","#FF0000"],["C10","#D00000"],
+    ["C11","#A00020"],["C12","#C04040"],["C13","#FF4020"],["C14","#FF6040"],["C15","#FF4040"],
+    ["C16","#F02040"],["C17","#E00040"],["C18","#800020"],["C19","#FF80C0"],["C20","#FF4080"],
+    ["C21","#E02060"],["C22","#F08080"],["C23","#E06060"],["C24","#D04040"],["C25","#D08080"],
+    ["C26","#C06060"],["C27","#A04040"]
+],
+D: [
+    ["D01","#FFC080"],["D02","#FFA040"],["D03","#FF8000"],["D04","#E06000"],["D05","#FFB020"],
+    ["D06","#F08020"],["D07","#FFD0A0"],["D08","#FFFFC0"],["D09","#FFFF00"],["D10","#FFD000"],
+    ["D11","#FFB000"],["D12","#FFFF80"],["D13","#FFF0C0"],["D14","#FFC800"],["D15","#D0B040"],
+    ["D16","#C0A020"],["D17","#FFD080"],["D18","#FFB080"],["D19","#F07030"],["D20","#E0A040"],
+    ["D21","#FFE060"],["D22","#FFF8E0"],["D23","#FFD840"],["D24","#FFA820"],["D25","#E0C060"],
+    ["D26","#B09030"],["D27","#D0B050"],["D28","#A08020"]
+],
+E: [
+    ["E01","#C0FFE0"],["E02","#80FFC0"],["E03","#C0E080"],["E04","#80C040"],["E05","#00C000"],
+    ["E06","#008000"],["E07","#004000"],["E08","#80E0C0"],["E09","#40C080"],["E10","#008060"],
+    ["E11","#408040"],["E12","#206020"],["E13","#808040"],["E14","#606020"],["E15","#E0FF80"],
+    ["E16","#C0FF40"],["E17","#80FF00"],["E18","#80E0A0"],["E19","#40C060"],["E20","#608060"],
+    ["E21","#A0C0A0"],["E22","#80A080"],["E23","#C0E0C0"],["E24","#40A040"],["E25","#C8E0B0"],
+    ["E26","#88C060"],["E27","#488030"],["E28","#80A080"],["E29","#408060"],["E30","#206040"],
+    ["E31","#A0C080"],["E32","#60A050"]
+],
+F: [
+    ["F01","#C0E0FF"],["F02","#80C0FF"],["F03","#0080FF"],["F04","#0040C0"],["F05","#002080"],
+    ["F06","#40A0FF"],["F07","#0060E0"],["F08","#80D0FF"],["F09","#40A0E0"],["F10","#0070C0"],
+    ["F11","#6080E0"],["F12","#4060C0"],["F13","#80E0FF"],["F14","#40C0FF"],["F15","#00A0E0"],
+    ["F16","#80A0C0"],["F17","#6080A0"],["F18","#003060"],["F19","#60A0FF"],["F20","#004080"],
+    ["F21","#C0E0F0"],["F22","#A0C0E0"],["F23","#406080"],["F24","#002040"],["F25","#90B0D0"],
+    ["F26","#5080B0"],["F27","#306090"],["F28","#B0C0D0"],["F29","#7090B0"]
+],
+G: [
+    ["G01","#E0C0FF"],["G02","#C080FF"],["G03","#8040FF"],["G04","#6020C0"],["G05","#D0B0FF"],
+    ["G06","#A060E0"],["G07","#8040C0"],["G08","#C0B0E0"],["G09","#A080C0"],["G10","#8060A0"],
+    ["G11","#F0C0FF"],["G12","#E080FF"],["G13","#D040E0"],["G14","#F0D0E0"],["G15","#E0B0C0"],
+    ["G16","#D0A0B0"],["G17","#C08090"],["G18","#A06070"],["G19","#C080E0"],["G20","#A040C0"],
+    ["G21","#8020A0"],["G22","#B080B0"],["G23","#906090"],["G24","#704070"],["G25","#D080C0"],
+    ["G26","#B060A0"],["G27","#904080"]
+],
+H: [
+    ["H01","#D0D8E0"],["H02","#B0B8C0"],["H03","#808890"],["H04","#D8D0C8"],["H05","#B8B0A8"],
+    ["H06","#989088"],["H07","#C0C8D0"],["H08","#A0A8B0"],["H09","#707880"],["H10","#C0D0C8"],
+    ["H11","#A0B0A8"],["H12","#708078"],["H13","#D0C8D0"],["H14","#B0A8B0"],["H15","#807880"],
+    ["H16","#1D1414"],["H17","#F1EDED"],["H18","#FFFDF0"],["H19","#F6EFE2"],["H20","#949FA3"],
+    ["H21","#FFFBE1"],["H22","#CACAD4"],["H23","#9A9D94"]
+]
+};
 
-// 圆环样式
+let currentType = "A";
+let currentColor = "#FFFFFF";
+
 function setRing(el,color){
-    el.style.background=`radial-gradient(transparent 30%, ${color} 31%)`;
+    el.style.background=`radial-(transparent 30%, ${color} 31%)`;
 }
 
-// 生成色卡
-function renderColor(){
-    colorWrap.innerHTML = '';
-    colorList.forEach(c=>{
-        let d = document.createElement('span');
-        d.className = 'color-item';
-        if(c===nowColor) d.classList.add('active');
-        d.style.backgroundColor = c;
-        d.onclick=()=>{
-            nowColor = c;
-            document.querySelectorAll('.color-item').forEach(i=>i.classList.remove('active'));
-            d.classList.add('active');
-        }
-        colorWrap.appendChild(d);
+function renderColors(type){
+    const box = document.getElementById("colorBox");
+    box.innerHTML = "";
+    colorData[type].forEach(([code, hex])=>{
+        const item = document.createElement("div");
+        item.className="color-item";
+        item.innerHTML=`<div class="color-name">${code}</div><div class="color-block" style="background:${hex}"></div>`;
+        item.onclick=()=>{
+            currentColor=hex;
+            document.querySelectorAll(".color-block").forEach(b=>b.style.outline="none");
+            item.querySelector(".color-block").style.outline="2px solid #333";
+        };
+        box.appendChild(item);
     })
 }
 
-// 生成画布
-function createGrid(w,h){
-    gridDom.innerHTML='';
-    map=[];
-    gridDom.style.gridTemplateColumns = `repeat(${w},20px)`;
-    for(let y=0;y<h;y++){
-        map[y]=[];
-        for(let x=0;x<w;x++){
-            map[y][x]=null;
-            let cell = document.createElement('div');
-            cell.className='cell';
-            cell.dataset.x=x;
-            cell.dataset.y=y;
-
-            // ====== 核心：点击有豆摘除、空白上色 ======
-            cell.onclick = function(){
-                let x = +this.dataset.x;
-                let y = +this.dataset.y;
-                if(map[y][x]){
-                    // 已有颜色 → 摘除还原空白
-                    map[y][x]=null;
-                    this.style.background="#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%)";
-                }else{
-                    // 空位置 → 上色
-                    map[y][x]=nowColor;
-                    setRing(this,nowColor);
-                }
-            }
-            gridDom.appendChild(cell);
-        }
-    }
-}
-
-// 尺寸切换
-document.querySelectorAll('.size-btn').forEach(btn=>{
-    btn.onclick=()=>{
-        document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        createGrid(+btn.dataset.w,+btn.dataset.h);
+document.getElementById("tabWrap").addEventListener("click",e=>{
+    if(e.target.classList.contains("tab-item")){
+        document.querySelectorAll(".tab-item").forEach(t=>t.classList.remove("active"));
+        e.target.classList.add("active");
+        currentType=e.target.dataset.type;renderColors(currentType);
     }
 })
 
-// 初始化
-renderColor();
-createGrid(16,16);
+// ========== 核心：点击上色 / 点击摘除 逻辑 ==========
+function createGrid(size){
+    const grid=document.getElementById("grid");
+    grid.innerHTML="";
+    grid.style.gridTemplateColumns=`repeat(${size},20px)`;
+    for(let i=0;i<size*size;i++){
+        const cell=document.createElement("div");
+        cell.className="cell";
+
+        // 点击：有颜色就摘除，没颜色就上色
+        cell.onclick = function(){
+            if(this.style.background.includes("radial-gradient(transparent")){
+                // 已有颜色 → 清空摘除
+                this.style.background = "#f7f7f7 radial-gradient(#ccc 20%, transparent 20%)";
+            }else{
+                // 空白 → 上色
+                setRing(this, currentColor);
+            }
+        };
+
+        grid.appendChild(cell);
+    }
+}
+
+document.querySelector(".size-bar").addEventListener("click",e=>{
+    if(e.target.classList.contains("size-btn")){
+        document.querySelectorAll(".size-btn").forEach(b=>b.classList.remove("active"));
+        e.target.classList.add("active");
+        createGrid(+e.target.dataset.num);
+    }
+})
+
+renderColors(currentType);
+createGrid(15);
 </script>
 </body>
 </html>

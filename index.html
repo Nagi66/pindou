@@ -9,7 +9,6 @@
 body{height:100vh;overflow:hidden;display:flex}
 .wrap-all{display:flex;width:100%;height:100%;}
 
-/*左侧固定侧边：一级Tab+色卡 */
 .left-sidebar{
     display:flex;
     height:100%;
@@ -31,12 +30,12 @@ body{height:100vh;overflow:hidden;display:flex}
 .color-item{
     width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;
 }
-/*圆形设相对定位，文字放进内部 */
 .color-block{
     width:42px;height:42px;border:1px solid #aaa;border-radius:50%;
     position:relative;
 }
-/*色号：圆居中、常规字、纯黑无描边 */
+
+/* 👇 这就是你要的：黑色字 + 1px白色描边（和导出图纸效果完全一致） */
 .color-name{
     position:absolute;
     top:50%;
@@ -44,11 +43,11 @@ body{height:100vh;overflow:hidden;display:flex}
     transform:translate(-50%,-50%);
     font-size:10px;
     font-weight:normal;
-    color:#000;
+    color:#000;                     /* 纯黑色字体 */
+    text-shadow:0 0 1px #fff;        /* 1px白色描边（正确写法！不会变白） */
     z-index:2;
 }
 
-/*右侧画布区域：顶栏+画布 */
 .right-main{
     flex:1;
     display:flex;
@@ -56,7 +55,6 @@ body{height:100vh;overflow:hidden;display:flex}
     height:100%;
     padding:24px;
 }
-/*苹果深色毛玻璃悬浮工具栏 深灰半透+磨砂 */
 .top-toolbar{
     padding:10px 12px;
     background:rgba(28,28,28,0.72);
@@ -78,7 +76,6 @@ body{height:100vh;overflow:hidden;display:flex}
     display:flex;
     gap:8px;
 }
-/*按钮高度34px、常态90%白色 */
 #sizeSelect,
 .undo-btn,.redo-btn,.saveImgBtn,.saveDraftBtn{
     height:34px;
@@ -89,7 +86,6 @@ body{height:100vh;overflow:hidden;display:flex}
     cursor:pointer;
     padding:0 10px;
 }
-/*下拉箭头距文字8px */
 #sizeSelect{
     padding-right:18px;
     appearance:none;
@@ -113,7 +109,6 @@ body{height:100vh;overflow:hidden;display:flex}
     display:flex;align-items:center;justify-content:center;
 }
 #grid{display:grid;gap:1px;width:fit-content;padding:6px;}
-/*空白格子灰点缩小变淡 */
 .cell{
     width:20px;height:20px;cursor:pointer;border-radius:50%;
     background:#f7f7f7 radial-gradient(#dddddd 12%, transparent 12.1%);
@@ -150,7 +145,6 @@ body{height:100vh;overflow:hidden;display:flex}
 </head>
 <body>
 <div class="wrap-all">
-    <!--左侧固定侧边栏-->
     <div class="left-sidebar">
         <div class="tab-big" id="tabWrap">
             <div class="tab-item active" data-type="A">A</div>
@@ -167,7 +161,6 @@ body{height:100vh;overflow:hidden;display:flex}
             <div class="color-list" id="colorBox"></div>
         </div>
     </div>
-    <!--右侧画布+顶栏-->
     <div class="right-main">
         <div class="top-toolbar">
             <div class="left-group">
@@ -208,8 +201,10 @@ let history = [];
 let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
-//拼豆内圈放大0.35
-const BEAD_HOLE_RATE = 0.35;
+
+const VIEW_HOLE_RATE = 0.35;
+const EXPORT_HOLE_RATE = 0.38;
+
 let audioUnlock = false;
 
 const undoBtn = document.getElementById('undoBtn');
@@ -229,7 +224,7 @@ function updateBtnState(){
     redoBtn.disabled = redoStack.length === 0;
 }
 function setRing(el,color){
-    el.style.background=`radial-gradient(transparent ${BEAD_HOLE_RATE*100}%, ${color} ${BEAD_HOLE_RATE*100+0.1}%)`;
+    el.style.background=`radial-gradient(transparent ${VIEW_HOLE_RATE*100}%, ${color} ${VIEW_HOLE_RATE*100+0.1}%)`;
 }
 function playBeadAnim(el){
     if(!audioUnlock){
@@ -252,7 +247,6 @@ function renderColors(type){
     colorData[type].forEach(([code, hex])=>{
         const item = document.createElement("div");
         item.className="color-item";
-        //文字嵌套进color-block内部
         item.innerHTML=`<div class="color-block" style="background:${hex}" title="${code}"><div class="color-name">${code}</div></div>`;
         item.onclick=()=>{
             currentColor=hex;
@@ -369,7 +363,7 @@ function previewEffectImg(){
             ctx.fillStyle=col;
             ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
             ctx.fillStyle="#f7f7f7";
-            ctx.beginPath();ctx.arc(cx,cy,r*BEAD_HOLE_RATE,0,Math.PI*2);ctx.fill();
+            ctx.beginPath();ctx.arc(cx,cy,r*EXPORT_HOLE_RATE,0,Math.PI*2);ctx.fill();
         }
     }
 

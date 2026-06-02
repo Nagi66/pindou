@@ -196,7 +196,7 @@ function renderColors(type){
     colorData[type].forEach(([code, hex])=>{
         const item = document.createElement("div");
         item.className="color-item";
-        item.innerHTML=`<div class="color-name">${code}</div><div class="color-block" style="background:${hex}"></div>`;
+        item.innerHTML=`<div class="color-name">${code}</div><div class="color-block" style="background:${hex}" title="${code}"></div>`;
         item.onclick=()=>{
             currentColor=hex;
             document.querySelectorAll(".color-block").forEach(b=>b.style.outline="none");
@@ -205,7 +205,6 @@ function renderColors(type){
         box.appendChild(item);
     })
 }
-
 /* --------------------------
 模块5：画板核心 + 记录历史（支持撤销/重做）
 -------------------------- */

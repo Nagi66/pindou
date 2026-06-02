@@ -42,7 +42,8 @@ body{height:100vh;overflow:hidden;display:flex}
 
 .cell{
     width:20px;height:20px;cursor:pointer;border-radius:50%;
-    background:#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%);
+    /* 页面豆子内白比例同步图纸比例：45%内径 */
+    background:#f7f7f7 radial-gradient(#ccc 45%, transparent 45.1%);
 }
 
 .toolbar{
@@ -145,6 +146,9 @@ let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
 
+//【全局拼豆内径比例，统一参数，修改这里就能改内径大小】
+const BEAD_HOLE_RATE = 0.45; //内白小圆=外径45%，实物标准比例
+
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
 const saveImgBtn = document.getElementById('saveImgBtn');
@@ -160,7 +164,7 @@ function updateBtnState(){
     redoBtn.disabled = redoStack.length === 0;
 }
 function setRing(el,color){
-    el.style.background=`radial-gradient(transparent 25%, ${color} 25%)`;
+    el.style.background=`radial-gradient(transparent ${BEAD_HOLE_RATE*100}%, ${color} ${BEAD_HOLE_RATE*100+0.1}%)`;
 }
 function renderColors(type){
     const box = document.getElementById("colorBox");
@@ -239,16 +243,19 @@ function redo(){
     applyHistory(redoStack.pop());
     updateBtnState();
 }
+
+//坐标轴文字：加粗加大
 function drawCoordAndGrid(ox, oy, size, gs, ctx){
     ctx.strokeStyle="#ddd";ctx.lineWidth=1;
     for(let i=0;i<=size;i++){
         ctx.beginPath();ctx.moveTo(ox+i*gs, oy);ctx.lineTo(ox+i*gs, oy+size*gs);ctx.stroke();
         ctx.beginPath();ctx.moveTo(ox, oy+i*gs);ctx.lineTo(ox+size*gs, oy+i*gs);ctx.stroke();
     }
-    ctx.fillStyle="#000";ctx.font="12px sans-serif";
+    ctx.fillStyle="#000";
+    ctx.font="bold 16px sans-serif"; //序号加粗放大
     for(let i=0;i<size;i++){
-        ctx.fillText(i+1, ox+gs*(i+0.5)-6, oy-8);
-        ctx.fillText(i+1, ox-22, oy+gs*(i+0.5)+4);
+        ctx.fillText(i+1, ox+gs*(i+0.5)-8, oy-8);
+        ctx.fillText(i+1, ox-25, oy+gs*(i+0.5)+5);
     }
 }
 function wrapText(text, x, y, maxW, lineH, ctx){
@@ -265,17 +272,15 @@ function wrapText(text, x, y, maxW, lineH, ctx){
     if(line) ctx.fillText(line, x, yy);
 }
 
-// 1、仅生成圆形效果图
+//1、圆形效果图
 function previewEffectImg(){
     const size = Math.sqrt(cellCodeList.length);
     const list = [...cellCodeList];
     const stats = {};let total=0;
     for(let c of list){if(c){stats[c]=(stats[c]||0)+1;total++}}
     const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-    const info1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
-    const info2 = sorted.map(c=>`${c}(${stats[c]})`).join(' ');
 
-    const FIXED_W = 900,PAD=35,BOTTOM=70;
+    const FIXED_W = 900,PAD=35,BOTTOM=90;
     const gridSize = Math.floor((FIXED_W-PAD*2)/size);
     const H = PAD*2 + gridSize*size + BOTTOM;
     const cvs = document.createElement('canvas');
@@ -283,41 +288,59 @@ function previewEffectImg(){
     cvs.width=FIXED_W;cvs.height=H;
     ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
     drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
+
+    //圆形豆子 内径统一比例
     for(let i=0;i<size;i++){
         for(let j=0;j<size;j++){
             const idx=i*size+j;const cd=list[idx];
             if(!cd)continue;
             const col=getHexByCode(cd);
-            const x=PAD+j*gridSize+gridSize/2;
-            const y=PAD+i*gridSize+gridSize/2;
+            const cx=PAD+j*gridSize+gridSize/2;
+            const cy=PAD+i*gridSize+gridSize/2;
+            const r=gridSize/2;
             ctx.fillStyle=col;
-            ctx.beginPath();ctx.arc(x,y,gridSize/2,0,Math.PI*2);ctx.fill();
+            ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
             ctx.fillStyle="#f7f7f7";
-            ctx.beginPath();ctx.arc(x,y,gridSize*0.25,0,Math.PI*2);ctx.fill();
+            ctx.beginPath();ctx.arc(cx,cy,r*BEAD_HOLE_RATE,0,Math.PI*2);ctx.fill();
         }
     }
-    //底部文字栏
+
+    //底部信息栏：色块+居中加粗文字
     ctx.fillStyle="#222";ctx.fillRect(0,H-BOTTOM,FIXED_W,BOTTOM);
-    ctx.fillStyle="#fff";ctx.font="16px sans-serif";
-    ctx.fillText(info1,15,H-BOTTOM+26);
-    ctx.font="14px sans-serif";
-    wrapText(info2,15,H-BOTTOM+54,FIXED_W-30,20,ctx);
+    ctx.fillStyle="#fff";
+    ctx.font="bold 16px sans-serif";
+    ctx.fillText(`尺寸：${size}×${size}｜总豆子：${total}颗`,15,H-BOTTOM+26);
+
+    //色块排布
+    let drawX = 15;
+    const itemW = 52;
+    const itemH = 36;
+    const itemY = H-BOTTOM+42;
+    sorted.forEach(key=>{
+        const clr = getHexByCode(key);
+        ctx.fillStyle=clr;
+        ctx.fillRect(drawX,itemY,itemW,itemH);
+        ctx.fillStyle="#000";
+        ctx.font="bold 15px sans-serif";
+        ctx.textAlign="center";
+        ctx.fillText(`${key}(${stats[key]})`,drawX+itemW/2,itemY+itemH/2+5);
+        ctx.textAlign="left";
+        drawX += itemW+6;
+    })
 
     previewImgEle.src = cvs.toDataURL("image/png");
     previewMask.style.display="flex";
 }
 
-//2、方块编号图纸
+//2、方块图纸
 function previewDraftImg(){
     const size = Math.sqrt(cellCodeList.length);
     const list = [...cellCodeList];
     const stats = {};let total=0;
     for(let c of list){if(c){stats[c]=(stats[c]||0)+1;total++}}
     const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-    const info1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
-    const info2 = sorted.map(c=>`${c}(${stats[c]})`).join(' ');
 
-    const FIXED_W = 900,PAD=35,BOTTOM=70;
+    const FIXED_W = 900,PAD=35,BOTTOM=90;
     const gridSize = Math.floor((FIXED_W-PAD*2)/size);
     const H = PAD*2 + gridSize*size + BOTTOM;
     const cvs = document.createElement('canvas');
@@ -325,6 +348,8 @@ function previewDraftImg(){
     cvs.width=FIXED_W;cvs.height=H;
     ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
     drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
+
+    //方格内文字居中加粗放大
     for(let i=0;i<size;i++){
         for(let j=0;j<size;j++){
             const idx=i*size+j;const cd=list[idx];
@@ -333,15 +358,35 @@ function previewDraftImg(){
             const x=PAD+j*gridSize;
             const y=PAD+i*gridSize;
             ctx.fillStyle=col;ctx.fillRect(x,y,gridSize,gridSize);
-            ctx.fillStyle="#fff";ctx.font="12px monospace";
-            ctx.fillText(cd,x+3,y+14);
+            ctx.fillStyle="#fff";
+            ctx.font="bold 15px monospace"; //加粗加大
+            ctx.textAlign="center";
+            ctx.fillText(cd,x+gridSize/2,y+gridSize/2+5);
+            ctx.textAlign="left";
         }
     }
+
+    //底部用料色块
     ctx.fillStyle="#222";ctx.fillRect(0,H-BOTTOM,FIXED_W,BOTTOM);
-    ctx.fillStyle="#fff";ctx.font="16px sans-serif";
-    ctx.fillText(info1,15,H-BOTTOM+26);
-    ctx.font="14px sans-serif";
-    wrapText(info2,15,H-BOTTOM+54,FIXED_W-30,20,ctx);
+    ctx.fillStyle="#fff";
+    ctx.font="bold 16px sans-serif";
+    ctx.fillText(`尺寸：${size}×${size}｜总豆子：${total}颗`,15,H-BOTTOM+26);
+
+    let drawX = 15;
+    const itemW = 52;
+    const itemH = 36;
+    const itemY = H-BOTTOM+42;
+    sorted.forEach(key=>{
+        const clr = getHexByCode(key);
+        ctx.fillStyle=clr;
+        ctx.fillRect(drawX,itemY,itemW,itemH);
+        ctx.fillStyle="#000";
+        ctx.font="bold 15px sans-serif";
+        ctx.textAlign="center";
+        ctx.fillText(`${key}(${stats[key]})`,drawX+itemW/2,itemY+itemH/2+5);
+        ctx.textAlign="left";
+        drawX += itemW+6;
+    })
 
     previewImgEle.src = cvs.toDataURL("image/png");
     previewMask.style.display="flex";

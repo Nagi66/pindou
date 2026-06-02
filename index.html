@@ -196,18 +196,13 @@ function createGrid(size){
     for(let i=0;i<size*size;i++){
         const cell=document.createElement("div");
         cell.className="cell";
-
-        // 点击：有颜色就摘除，没颜色就上色
         cell.onclick = function(){
-            if(this.style.background.includes("radial-gradient(transparent")){
-                // 已有颜色 → 清空摘除
-                this.style.background = "#f7f7f7 radial-gradient(#ccc 20%, transparent 20%)";
-            }else{
-                // 空白 → 上色
+            if(!this.style.background){
                 setRing(this, currentColor);
+            }else{
+                this.style.background = "#f7f7f7 radial-gradient(#ccc 22.4%, transparent 22.5%)";
             }
         };
-
         grid.appendChild(cell);
     }
 }

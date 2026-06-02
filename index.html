@@ -281,9 +281,9 @@ function redo(){
 }
 
 /* --------------------------
-导出：合并图 + 网格 + 正确色号
+导出：合并图 + 网格 + 正确色号【修复版】
 -------------------------- */
-async function exportAll(){
+function exportAll(){
     const size = Math.sqrt(cellCodeList.length);
     const list = [...cellCodeList];
 
@@ -299,7 +299,7 @@ async function exportAll(){
     const infoLine1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
     const infoLine2 = sorted.map(c=>{
         const h = getHexByCode(c);
-        return `<span style="display:inline-block;width:14px;height:14px;background:${h};margin-right:4px;"></span>${c}(${stats[c]})`;
+        return `${c}(${stats[c]})`;
     }).join(' ');
 
     const canvas = document.createElement('canvas');
@@ -365,10 +365,10 @@ async function exportAll(){
     ctx.font="16px sans-serif";
     ctx.fillText(infoLine1, 16, totalH-BOTTOM_H+28);
     ctx.font="14px sans-serif";
-    wrapText(infoLine2.replace(/<[^>]+>/g,''), 16, totalH-BOTTOM_H+58, FIXED_W-32, 20);
+    wrapText(infoLine2, 16, totalH-BOTTOM_H+58, FIXED_W-32, 20);
 
     // 下载图片
-    await download(canvas, `拼豆全套图纸_${new Date().getTime()}.png`);
+    download(canvas, `拼豆全套图纸_${new Date().getTime()}.png`);
 
     // TXT清单
     const txt = `拼豆用料清单\n尺寸：${size}×${size}\n时间：${new Date().toLocaleString()}\n\n${sorted.map(c=>`${c}：${stats[c]}颗`).join('\n')}\n\n总计：${total}颗`;
@@ -378,6 +378,13 @@ async function exportAll(){
     a.href=url; a.download=`用料清单_${new Date().getTime()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+}
+
+function download(canvas,name){
+    const a=document.createElement('a');
+    a.href = canvas.toDataURL("image/png");
+    a.download = name;
+    a.click();
 }
 
 // 绘制坐标 + 浅灰网格

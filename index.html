@@ -46,7 +46,7 @@ body{height:100vh;overflow:hidden;display:flex}
 .size-btn{padding:5px 8px;margin:0 3px;border:1px solid #999;background:#fff;cursor:pointer}
 .size-btn.active{background:#333;color:#fff;border-color:#333}
 .canvas-box{flex:1;padding:10px;overflow:auto;background:#f7f7f7}
-#grid{display:grid;gap:3px;width:fit-content}
+#grid{display:grid;gap:1px;width:fit-content}
 /* gap:1px = 豆子之间空隙，修改数字即可调整间距 */
 
 /* 空白单个拼豆格子默认样式 */
@@ -125,7 +125,7 @@ let currentColor = "#FFFFFF";
 模块3：拼豆样式
 -------------------------- */
 function setRing(el,color){
-    el.style.background=`radial-gradient(transparent 30%, ${color} 31%)`;
+    el.style.background=`radial-gradient(transparent 25%, ${color} 25%)`;
 }
 
 /* --------------------------

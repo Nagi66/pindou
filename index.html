@@ -42,8 +42,8 @@ body{height:100vh;overflow:hidden;display:flex}
 
 .cell{
     width:20px;height:20px;cursor:pointer;border-radius:50%;
-    /* 页面豆子内白比例同步图纸比例：45%内径 */
-    background:#f7f7f7 radial-gradient(#ccc 45%, transparent 45.1%);
+    /*复原旧版内圈尺寸 0.25原比例 */
+    background:#f7f7f7 radial-gradient(#ccc 25%, transparent 25.1%);
 }
 
 .toolbar{
@@ -146,8 +146,8 @@ let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
 
-//【全局拼豆内径比例，统一参数，修改这里就能改内径大小】
-const BEAD_HOLE_RATE = 0.45; //内白小圆=外径45%，实物标准比例
+//复原原版拼豆内圈比例0.25
+const BEAD_HOLE_RATE = 0.25;
 
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
@@ -244,7 +244,7 @@ function redo(){
     updateBtnState();
 }
 
-//坐标轴文字：加粗加大
+//坐标轴序号加粗加大
 function drawCoordAndGrid(ox, oy, size, gs, ctx){
     ctx.strokeStyle="#ddd";ctx.lineWidth=1;
     for(let i=0;i<=size;i++){
@@ -252,7 +252,7 @@ function drawCoordAndGrid(ox, oy, size, gs, ctx){
         ctx.beginPath();ctx.moveTo(ox, oy+i*gs);ctx.lineTo(ox+size*gs, oy+i*gs);ctx.stroke();
     }
     ctx.fillStyle="#000";
-    ctx.font="bold 16px sans-serif"; //序号加粗放大
+    ctx.font="bold 16px sans-serif";
     for(let i=0;i<size;i++){
         ctx.fillText(i+1, ox+gs*(i+0.5)-8, oy-8);
         ctx.fillText(i+1, ox-25, oy+gs*(i+0.5)+5);
@@ -272,7 +272,7 @@ function wrapText(text, x, y, maxW, lineH, ctx){
     if(line) ctx.fillText(line, x, yy);
 }
 
-//1、圆形效果图
+//1、保存效果图
 function previewEffectImg(){
     const size = Math.sqrt(cellCodeList.length);
     const list = [...cellCodeList];
@@ -289,7 +289,6 @@ function previewEffectImg(){
     ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
     drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
 
-    //圆形豆子 内径统一比例
     for(let i=0;i<size;i++){
         for(let j=0;j<size;j++){
             const idx=i*size+j;const cd=list[idx];
@@ -305,34 +304,45 @@ function previewEffectImg(){
         }
     }
 
-    //底部信息栏：色块+居中加粗文字
     ctx.fillStyle="#222";ctx.fillRect(0,H-BOTTOM,FIXED_W,BOTTOM);
     ctx.fillStyle="#fff";
     ctx.font="bold 16px sans-serif";
     ctx.fillText(`尺寸：${size}×${size}｜总豆子：${total}颗`,15,H-BOTTOM+26);
 
-    //色块排布
     let drawX = 15;
-    const itemW = 52;
-    const itemH = 36;
     const itemY = H-BOTTOM+42;
+    const paddingSide = 8; //左右预留8px
     sorted.forEach(key=>{
-        const clr = getHexByCode(key);
-        ctx.fillStyle=clr;
-        ctx.fillRect(drawX,itemY,itemW,itemH);
-        ctx.fillStyle="#000";
+        const textStr = `${key}(${stats[key]})`;
         ctx.font="bold 15px sans-serif";
+        const txtW = ctx.measureText(textStr).width;
+        const boxW = txtW + paddingSide*2;
+        const boxH =36;
+        const clr = getHexByCode(key);
+
+        //圆角矩形4px
+        ctx.fillStyle=clr;
+        ctx.beginPath();
+        ctx.roundRect(drawX,itemY,boxW,boxH,4);
+        ctx.fill();
+
+        //文字白色描边+黑色字
         ctx.textAlign="center";
-        ctx.fillText(`${key}(${stats[key]})`,drawX+itemW/2,itemY+itemH/2+5);
+        ctx.strokeStyle="#fff";
+        ctx.lineWidth=2;
+        ctx.strokeText(textStr,drawX+boxW/2,itemY+boxH/2+5);
+        ctx.fillStyle="#000";
+        ctx.fillText(textStr,drawX+boxW/2,itemY+boxH/2+5);
+
         ctx.textAlign="left";
-        drawX += itemW+6;
+        drawX += boxW+6;
     })
 
     previewImgEle.src = cvs.toDataURL("image/png");
     previewMask.style.display="flex";
 }
 
-//2、方块图纸
+//2、保存图纸
 function previewDraftImg(){
     const size = Math.sqrt(cellCodeList.length);
     const list = [...cellCodeList];
@@ -349,7 +359,7 @@ function previewDraftImg(){
     ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
     drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
 
-    //方格内文字居中加粗放大
+    //方格内文字居中加粗
     for(let i=0;i<size;i++){
         for(let j=0;j<size;j++){
             const idx=i*size+j;const cd=list[idx];
@@ -358,41 +368,55 @@ function previewDraftImg(){
             const x=PAD+j*gridSize;
             const y=PAD+i*gridSize;
             ctx.fillStyle=col;ctx.fillRect(x,y,gridSize,gridSize);
-            ctx.fillStyle="#fff";
-            ctx.font="bold 15px monospace"; //加粗加大
+            ctx.font="bold 15px monospace";
             ctx.textAlign="center";
+            //格子内文字白边
+            ctx.strokeStyle="#fff";
+            ctx.lineWidth=2;
+            ctx.strokeText(cd,x+gridSize/2,y+gridSize/2+5);
+            ctx.fillStyle="#fff";
             ctx.fillText(cd,x+gridSize/2,y+gridSize/2+5);
             ctx.textAlign="left";
         }
     }
 
-    //底部用料色块
     ctx.fillStyle="#222";ctx.fillRect(0,H-BOTTOM,FIXED_W,BOTTOM);
     ctx.fillStyle="#fff";
     ctx.font="bold 16px sans-serif";
     ctx.fillText(`尺寸：${size}×${size}｜总豆子：${total}颗`,15,H-BOTTOM+26);
 
     let drawX = 15;
-    const itemW = 52;
-    const itemH = 36;
     const itemY = H-BOTTOM+42;
+    const paddingSide = 8;
     sorted.forEach(key=>{
-        const clr = getHexByCode(key);
-        ctx.fillStyle=clr;
-        ctx.fillRect(drawX,itemY,itemW,itemH);
-        ctx.fillStyle="#000";
+        const textStr = `${key}(${stats[key]})`;
         ctx.font="bold 15px sans-serif";
+        const txtW = ctx.measureText(textStr).width;
+        const boxW = txtW + paddingSide*2;
+        const boxH =36;
+        const clr = getHexByCode(key);
+
+        ctx.fillStyle=clr;
+        ctx.beginPath();
+        ctx.roundRect(drawX,itemY,boxW,boxH,4);
+        ctx.fill();
+
         ctx.textAlign="center";
-        ctx.fillText(`${key}(${stats[key]})`,drawX+itemW/2,itemY+itemH/2+5);
+        ctx.strokeStyle="#fff";
+        ctx.lineWidth=2;
+        ctx.strokeText(textStr,drawX+boxW/2,itemY+boxH/2+5);
+        ctx.fillStyle="#000";
+        ctx.fillText(textStr,drawX+boxW/2,itemY+boxH/2+5);
+
         ctx.textAlign="left";
-        drawX += itemW+6;
+        drawX += boxW+6;
     })
 
     previewImgEle.src = cvs.toDataURL("image/png");
     previewMask.style.display="flex";
 }
 
-//绑定按钮
+//按钮绑定
 saveImgBtn.onclick=previewEffectImg;
 saveDraftBtn.onclick=previewDraftImg;
 undoBtn.onclick=undo;redoBtn.onclick=redo;
@@ -412,7 +436,6 @@ document.querySelector(".size-bar").onclick = e=>{
     }
 }
 
-//初始化
 renderColors(currentType);
 createGrid(15);
 </script>

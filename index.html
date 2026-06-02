@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>拼豆模拟器</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
 body{height:100vh;overflow:hidden;display:flex}
@@ -42,7 +41,6 @@ body{height:100vh;overflow:hidden;display:flex}
 
 .cell{
     width:20px;height:20px;cursor:pointer;border-radius:50%;
-    /*复原旧版内圈尺寸 0.25原比例 */
     background:#f7f7f7 radial-gradient(#ccc 25%, transparent 25.1%);
 }
 
@@ -72,7 +70,6 @@ body{height:100vh;overflow:hidden;display:flex}
     background:rgba(255,255,255,0.65);
 }
 
-/*预览遮罩弹窗*/
 .previewMask{
     position:fixed;left:0;top:0;width:100vw;height:100vh;
     background:rgba(0,0,0,0.75);
@@ -124,8 +121,8 @@ body{height:100vh;overflow:hidden;display:flex}
             <div id="grid"></div>
         </div>
         <div class="toolbar">
-            <button class="undo-btn" id="undoBtn" title="撤销">←撤销</button>
-            <button class="redo-btn" id="redoBtn" title="重做">→重做</button>
+            <button class="undo-btn" id="undoBtn">撤销</button>
+            <button class="redo-btn" id="redoBtn">重做</button>
             <button class="saveImgBtn" id="saveImgBtn">保存效果图</button>
             <button class="saveDraftBtn" id="saveDraftBtn">保存图纸</button>
         </div>
@@ -146,7 +143,7 @@ let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
 
-//复原原版拼豆内圈比例0.25
+//固定内孔比例25%，画布&导出效果图完全一致
 const BEAD_HOLE_RATE = 0.25;
 
 const undoBtn = document.getElementById('undoBtn');
@@ -244,7 +241,6 @@ function redo(){
     updateBtnState();
 }
 
-//坐标轴序号加粗加大
 function drawCoordAndGrid(ox, oy, size, gs, ctx){
     ctx.strokeStyle="#ddd";ctx.lineWidth=1;
     for(let i=0;i<=size;i++){
@@ -272,7 +268,7 @@ function wrapText(text, x, y, maxW, lineH, ctx){
     if(line) ctx.fillText(line, x, yy);
 }
 
-//1、保存效果图
+//效果图：内孔严格25%，和画布豆子一模一样
 function previewEffectImg(){
     const size = Math.sqrt(cellCodeList.length);
     const list = [...cellCodeList];
@@ -311,7 +307,7 @@ function previewEffectImg(){
 
     let drawX = 15;
     const itemY = H-BOTTOM+42;
-    const paddingSide = 8; //左右预留8px
+    const paddingSide = 8;
     sorted.forEach(key=>{
         const textStr = `${key}(${stats[key]})`;
         ctx.font="bold 15px sans-serif";
@@ -320,13 +316,11 @@ function previewEffectImg(){
         const boxH =36;
         const clr = getHexByCode(key);
 
-        //圆角矩形4px
         ctx.fillStyle=clr;
         ctx.beginPath();
         ctx.roundRect(drawX,itemY,boxW,boxH,4);
         ctx.fill();
 
-        //文字白色描边+黑色字
         ctx.textAlign="center";
         ctx.strokeStyle="#fff";
         ctx.lineWidth=2;
@@ -342,7 +336,7 @@ function previewEffectImg(){
     previewMask.style.display="flex";
 }
 
-//2、保存图纸
+//图纸格子字体：12px、不加粗
 function previewDraftImg(){
     const size = Math.sqrt(cellCodeList.length);
     const list = [...cellCodeList];
@@ -359,7 +353,6 @@ function previewDraftImg(){
     ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
     drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
 
-    //方格内文字居中加粗
     for(let i=0;i<size;i++){
         for(let j=0;j<size;j++){
             const idx=i*size+j;const cd=list[idx];
@@ -368,9 +361,8 @@ function previewDraftImg(){
             const x=PAD+j*gridSize;
             const y=PAD+i*gridSize;
             ctx.fillStyle=col;ctx.fillRect(x,y,gridSize,gridSize);
-            ctx.font="bold 15px monospace";
+            ctx.font="12px monospace";//变小、取消加粗
             ctx.textAlign="center";
-            //格子内文字白边
             ctx.strokeStyle="#fff";
             ctx.lineWidth=2;
             ctx.strokeText(cd,x+gridSize/2,y+gridSize/2+5);
@@ -416,7 +408,6 @@ function previewDraftImg(){
     previewMask.style.display="flex";
 }
 
-//按钮绑定
 saveImgBtn.onclick=previewEffectImg;
 saveDraftBtn.onclick=previewDraftImg;
 undoBtn.onclick=undo;redoBtn.onclick=redo;

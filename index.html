@@ -111,30 +111,25 @@ body{height:100vh;overflow:hidden;display:flex}
 </div>
 
 
-<script>
-//【关键：引入外部独立颜色智能对象color.js】
+<!-- 正确引入颜色包 -->
 <script src="color.js"></script>
 
-
+<script>
 /* --------------------------
-模块2：全局变量【储存当前选中色系、当前选中颜色，极少修改】
+模块2：全局变量
 -------------------------- */
 let currentType = "A";
 let currentColor = "#FFFFFF";
 
-
-
 /* --------------------------
-模块3：工具函数 setRing【修改拼豆圆环空心大小在这里，30%=空心占比】
+模块3：拼豆样式
 -------------------------- */
 function setRing(el,color){
     el.style.background=`radial-gradient(transparent 30%, ${color} 31%)`;
 }
 
-
-
 /* --------------------------
-模块4：渲染色板函数【左侧切换色系，右侧生成颜色方块】
+模块4：渲染颜色面板
 -------------------------- */
 function renderColors(type){
     const box = document.getElementById("colorBox");
@@ -152,10 +147,8 @@ function renderColors(type){
     })
 }
 
-
-
 /* --------------------------
-模块5：画板核心逻辑【重中之重：格子生成+点击上色/摘除逻辑，后续改涂色擦除全在这里】
+模块5：画板核心
 -------------------------- */
 function createGrid(size){
     const grid=document.getElementById("grid");
@@ -164,7 +157,6 @@ function createGrid(size){
     for(let i=0;i<size*size;i++){
         const cell=document.createElement("div");
         cell.className="cell";
-        // 点击逻辑：空白上色，有色点击摘除
         cell.onclick = function(){
             if(this.style.background){
                 this.style.removeProperty('background');
@@ -176,12 +168,9 @@ function createGrid(size){
     }
 }
 
-
-
 /* --------------------------
-模块6：页面各类点击绑定【tab切换、画布尺寸切换】
+模块6：点击事件
 -------------------------- */
-//左侧分类点击切换色系
 document.getElementById("tabWrap").addEventListener("click",e=>{
     if(e.target.classList.contains("tab-item")){
         document.querySelectorAll(".tab-item").forEach(t=>t.classList.remove("active"));
@@ -190,7 +179,6 @@ document.getElementById("tabWrap").addEventListener("click",e=>{
     }
 })
 
-//顶部尺寸按钮切换画布大小
 document.querySelector(".size-bar").addEventListener("click",e=>{
     if(e.target.classList.contains("size-btn")){
         document.querySelectorAll(".size-btn").forEach(b=>b.classList.remove("active"));
@@ -199,10 +187,8 @@ document.querySelector(".size-bar").addEventListener("click",e=>{
     }
 })
 
-
-
 /* --------------------------
-模块7：页面初始化启动【页面加载自动运行】
+模块7：初始化
 -------------------------- */
 renderColors(currentType);
 createGrid(15);

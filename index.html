@@ -14,7 +14,7 @@ body{height:100vh;overflow:hidden;display:flex}
     height:100%;
 }
 .tab-big{
-    width:70px;background:#f2f7f7;display:flex;flex-direction:column;
+    width:70px;background:#f2f2f2;display:flex;flex-direction:column;
 }
 .tab-item{
     padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
@@ -35,19 +35,22 @@ body{height:100vh;overflow:hidden;display:flex}
     position:relative;
 }
 
-/* 👇 这就是你要的：黑色字 + 1px白色描边（和导出图纸效果完全一致） */
+/* --------- 最终完美文字样式 --------- */
 .color-name{
     position:absolute;
     top:50%;
     left:50%;
     transform:translate(-50%,-50%);
-    font-size:12px;
-    font-weight:normal;
+    font-size:10px;
+    font-weight: bold;
     color:#000;
-    /* 删除全部text-shadow，改用原生描边 */
-    -webkit-text-stroke:3px #fff;
+    /* 清晰白色外描边，不发虚，不变白 */
+    text-shadow: 
+        0 0 1px rgba(255,255,255,0.8),
+        0 0 2px rgba(255,255,255,0.6);
     z-index:2;
 }
+/* ----------------------------------- */
 
 .right-main{
     flex:1;
@@ -90,7 +93,7 @@ body{height:100vh;overflow:hidden;display:flex}
 #sizeSelect{
     padding-right:18px;
     appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='12' viewBox='0 0 24 24' width='12' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='12px' viewBox='0 0 24 24' width='12px' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
     background-repeat:no-repeat;
     background-position:right 8px center;
 }
@@ -100,8 +103,10 @@ body{height:100vh;overflow:hidden;display:flex}
     cursor:not-allowed;
 }
 #sizeSelect:hover:not(:disabled),
-.undo-btn:hover:not(:disabled),.redo-btn:hover:not(:disabled),
-.saveImgBtn:hover,.saveDraftBtn:hover{
+.undo-btn:hover:not(:disabled),
+.redo-btn:hover:not(:disabled),
+.saveImgBtn:hover:not(:disabled),
+.saveDraftBtn:hover:not(:disabled){
     background:rgba(255,255,255,0.95);
 }
 
@@ -203,8 +208,9 @@ let redoStack = [];
 const MAX_HISTORY = 50;
 let cellCodeList = [];
 
-const VIEW_HOLE_RATE = 0.24;
-const EXPORT_HOLE_RATE = 0.34;
+// 两套独立孔径参数
+const VIEW_HOLE_RATE = 0.35;    // 页面画布显示孔径
+const EXPORT_HOLE_RATE = 0.38;  // 导出效果图孔径
 
 let audioUnlock = false;
 
@@ -224,6 +230,7 @@ function updateBtnState(){
     undoBtn.disabled = history.length === 0;
     redoBtn.disabled = redoStack.length === 0;
 }
+// 页面渲染使用VIEW_HOLE_RATE
 function setRing(el,color){
     el.style.background=`radial-gradient(transparent ${VIEW_HOLE_RATE*100}%, ${color} ${VIEW_HOLE_RATE*100+0.1}%)`;
 }
@@ -363,6 +370,7 @@ function previewEffectImg(){
             const r=gridSize/2;
             ctx.fillStyle=col;
             ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+            // 导出使用EXPORT_HOLE_RATE
             ctx.fillStyle="#f7f7f7";
             ctx.beginPath();ctx.arc(cx,cy,r*EXPORT_HOLE_RATE,0,Math.PI*2);ctx.fill();
         }

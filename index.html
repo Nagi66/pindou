@@ -34,7 +34,7 @@
         .size-btn{padding:5px 8px;margin:0 3px;border:1px solid #999;background:#fff;cursor:pointer}
         .size-btn.active{background:#333;color:#fff;border-color:#333}
         .canvas-box{flex:1;padding:10px;overflow:auto;background:#f7f7f7}
-        #grid{display:grid;gap:3px;width:fit-content}
+        #grid{display:grid;gap:1px;width:fit-content}
         /*空白格子：缩小30%淡灰色原点 22.4% #ccc浅灰*/
         .cell{
             width:20px;height:20px;cursor:pointer;border-radius:50%;
@@ -167,7 +167,7 @@ let currentColor = "#FFFFFF";
 
 //原内径50%，缩小40% → 50*0.6 = 30%，中间透明30%，外圈有色70%
 function setRing(el,color){
-    el.style.background=`radial-gradient(transparent 22%, ${color} 22%)`;
+    el.style.background=`radial-gradient(transparent 25%, ${color} 25%)`;
 }
 
 function renderColors(type){

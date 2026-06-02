@@ -18,7 +18,7 @@ body{height:100vh;overflow:hidden;display:flex}
 
 /* 2.左侧分类TAB栏样式 */
 .tab-big{
-    width:70px;background:#f2f2f2;display:flex;flex-direction:column;
+    width:70px;background:#f2f2f2;display:flex;column-gap:flex;flex-direction:column;
 }
 .tab-item{
     padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
@@ -66,12 +66,12 @@ body{height:100vh;overflow:hidden;display:flex}
 /* ========== 底部工具栏 黑色80% 底色 ========== */
 .toolbar{
     padding:10px;
-    background: rgba(0, 0, 0, 0.8); /* 黑色80% */
+    background: rgba(0, 0, 0, 0.8);
     display:flex;
     gap:8px;
     align-items:center;
 }
-.undo-btn,.redo-btn{
+.undo-btn,.redo-btn,.save-btn{
     width:40px;
     height:40px;
     border-radius:12px;
@@ -84,13 +84,13 @@ body{height:100vh;overflow:hidden;display:flex}
     align-items:center;
     justify-content:center;
 }
-/* 禁用状态：按钮白50%→20%，文字白100%→50% */
+.save-btn{font-size:20px;}
 .undo-btn:disabled,.redo-btn:disabled{
     background:rgba(255,255,255,0.2);
     color:rgba(255,255,255,0.5);
     cursor:not-allowed;
 }
-.undo-btn:hover:not(:disabled),.redo-btn:hover:not(:disabled){
+.undo-btn:hover:not(:disabled),.redo-btn:hover:not(:disabled),.save-btn:hover:not(:disabled){
     background:rgba(255,255,255,0.65);
 }
 
@@ -117,17 +117,16 @@ body{height:100vh;overflow:hidden;display:flex}
 </style>
 </head>
 <body>
-<!-- ========== HTML区块：页面固定骨架【页面布局结构，基本不用改动】 ========== -->
 <div class="wrap-all">
     <div class="tab-big" id="tabWrap">
-        <div class="tab-item active" data-type="A">A灰白</div>
-        <div class="tab-item" data-type="B">B棕肤</div>
-        <div class="tab-item" data-type="C">C红色</div>
-        <div class="tab-item" data-type="D">D橙黄</div>
-        <div class="tab-item" data-type="E">E绿色</div>
-        <div class="tab-item" data-type="F">F蓝色</div>
-        <div class="tab-item" data-type="G">G紫玫</div>
-        <div class="tab-item" data-type="H">H灰补</div>
+        <div class="tab-item active" data-type="A">A</div>
+        <div class="tab-item" data-type="B">B</div>
+        <div class="tab-item" data-type="C">C</div>
+        <div class="tab-item" data-type="D">D</div>
+        <div class="tab-item" data-type="E">E</div>
+        <div class="tab-item" data-type="F">F</div>
+        <div class="tab-item" data-type="G">G</div>
+        <div class="tab-item" data-type="H">H</div>
     </div>
     <div class="color-side">
         <div class="color-list" id="colorBox"></div>
@@ -146,49 +145,42 @@ body{height:100vh;overflow:hidden;display:flex}
             <div id="grid"></div>
         </div>
 
-        <!-- 底部工具栏：撤销← 重做→ -->
         <div class="toolbar">
             <button class="undo-btn" id="undoBtn" title="撤销">←</button>
             <button class="redo-btn" id="redoBtn" title="重做">→</button>
+            <button class="save-btn" id="saveBtn" title="导出双图+清单">💾</button>
         </div>
     </div>
 </div>
 
-
-<!-- 正确引入颜色包 -->
 <script src="color.js"></script>
-
 <script>
 /* --------------------------
-模块2：全局变量
+全局变量
 -------------------------- */
 let currentType = "A";
 let currentColor = "#FFFFFF";
-
-/* --------------------------
-撤销历史 + 重做缓存
--------------------------- */
 let history = [];
 let redoStack = [];
 const MAX_HISTORY = 50;
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
+const saveBtn = document.getElementById('saveBtn');
 
-// 更新按钮可用状态
 function updateBtnState(){
     undoBtn.disabled = history.length === 0;
     redoBtn.disabled = redoStack.length === 0;
 }
 
 /* --------------------------
-模块3：拼豆样式
+拼豆渲染样式
 -------------------------- */
 function setRing(el,color){
     el.style.background=`radial-gradient(transparent 25%, ${color} 25%)`;
 }
 
 /* --------------------------
-模块4：渲染颜色面板
+颜色面板渲染
 -------------------------- */
 function renderColors(type){
     const box = document.getElementById("colorBox");
@@ -205,14 +197,14 @@ function renderColors(type){
         box.appendChild(item);
     })
 }
+
 /* --------------------------
-模块5：画板核心 + 记录历史（支持撤销/重做）
+画板创建
 -------------------------- */
 function createGrid(size){
     const grid=document.getElementById("grid");
     grid.innerHTML="";
     grid.style.gridTemplateColumns=`repeat(${size},20px)`;
-    // 切换尺寸清空历史、重做栈
     history = [];
     redoStack = [];
 
@@ -223,9 +215,7 @@ function createGrid(size){
 
         cell.onclick = function(){
             saveHistory();
-            // 新操作清空重做栈
             redoStack = [];
-
             if(this.style.background){
                 this.style.removeProperty('background');
             }else{
@@ -239,50 +229,17 @@ function createGrid(size){
 }
 
 /* --------------------------
-保存历史状态
+撤销/重做 基础逻辑
 -------------------------- */
 function saveHistory(){
     const cells = document.querySelectorAll('.cell');
     const state = Array.from(cells).map(c => c.style.background);
     history.push(state);
-    if(history.length > MAX_HISTORY){
-        history.shift();
-    }
+    if(history.length > MAX_HISTORY) history.shift();
 }
-
-/* --------------------------
-撤销功能
--------------------------- */
-function undo(){
-    if(history.length === 0) return;
-    const nowState = getNowState();
-    redoStack.push(nowState);
-
-    const prevState = history.pop();
-    applyState(prevState);
-    updateBtnState();
-}
-
-/* --------------------------
-重做功能
--------------------------- */
-function redo(){
-    if(redoStack.length === 0) return;
-    const nowState = getNowState();
-    history.push(nowState);
-    if(history.length>MAX_HISTORY) history.shift();
-
-    const nextState = redoStack.pop();
-    applyState(nextState);
-    updateBtnState();
-}
-
-// 获取当前画布全量状态
 function getNowState(){
-    const cells = document.querySelectorAll('.cell');
-    return Array.from(cells).map(c=>c.style.background);
+    return Array.from(document.querySelectorAll('.cell')).map(c=>c.style.background);
 }
-// 把状态渲染到画布
 function applyState(state){
     const cells = document.querySelectorAll('.cell');
     cells.forEach((c,i)=>{
@@ -290,32 +247,146 @@ function applyState(state){
         else c.style.removeProperty('background');
     })
 }
+function undo(){
+    if(history.length===0)return;
+    redoStack.push(getNowState());
+    applyState(history.pop());
+    updateBtnState();
+}
+function redo(){
+    if(redoStack.length===0)return;
+    history.push(getNowState());
+    if(history.length>MAX_HISTORY)history.shift();
+    applyState(redoStack.pop());
+    updateBtnState();
+}
 
 /* --------------------------
-模块6：点击事件
+导出：统计 + 双图 + 清单
 -------------------------- */
-document.getElementById("tabWrap").addEventListener("click",e=>{
+async function exportAll(){
+    const size = Math.sqrt(document.querySelectorAll('.cell').length);
+    const state = getNowState();
+    const stats = {};
+    let total = 0;
+
+    for(let s of state){
+        if(!s) continue;
+        const [code] = Object.entries(colorData).flatMap(([k,arr])=>arr.filter(x=>x[1]===s)).map(x=>x[0]) || ["未知"];
+        stats[code] = (stats[code]||0)+1;
+        total++;
+    }
+
+    const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    const info1 = `尺寸：${size}×${size}｜总豆子：${total}颗`;
+    const info2 = sorted.map(c=>`■${c}(${stats[c]})`).join(' ');
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const FIXED_WIDTH = 1000;
+    const PAD = 40;
+    const BOTTOM_H = 80;
+    const gridSize = Math.floor((FIXED_WIDTH - PAD*2) / size);
+    const imgW = FIXED_WIDTH;
+    const imgH = PAD*2 + gridSize*size + BOTTOM_H;
+
+    canvas.width = imgW;
+    canvas.height = imgH;
+
+    // 绘制通用背景+坐标+底部黑栏
+    function drawBase(){
+        ctx.fillStyle='#fff';ctx.fillRect(0,0,imgW,imgH);
+        ctx.fillStyle='#f7f7f7';ctx.fillRect(PAD,PAD,gridSize*size,gridSize*size);
+        ctx.fillStyle='#222';ctx.fillRect(0,imgH-BOTTOM_H,imgW,BOTTOM_H);
+        ctx.fillStyle='#fff';ctx.font='14px sans-serif';
+        ctx.fillText(info1,15,imgH-BOTTOM_H+22);
+        ctx.fillText(info2,15,imgH-BOTTOM_H+50);
+        ctx.font='12px sans-serif';ctx.fillStyle='#000';
+        for(let i=0;i<size;i++){
+            ctx.fillText(i+1,PAD+gridSize*(i+0.5)-5,PAD-8);
+            ctx.fillText(i+1,PAD-25,PAD+gridSize*(i+0.5)+4);
+        }
+    }
+
+    // 图1：圆形效果图
+    drawBase();
+    for(let i=0;i<size;i++){
+        for(let j=0;j<size;j++){
+            const idx = i*size+j;
+            const x = PAD + j*gridSize;
+            const y = PAD + i*gridSize;
+            if(state[idx]){
+                ctx.fillStyle=state[idx].match(/rgb.*?\)/)[0];
+                ctx.beginPath();ctx.arc(x+gridSize/2,y+gridSize/2,gridSize/2,0,Math.PI*2);ctx.fill();
+                ctx.fillStyle='#f7f7f7';
+                ctx.beginPath();ctx.arc(x+gridSize/2,y+gridSize/2,gridSize*0.25,0,Math.PI*2);ctx.fill();
+            }
+        }
+    }
+    await download(canvas,`拼豆效果图_${new Date().getTime()}.png`);
+
+    // 图2：方格色号图
+    canvas.width=imgW;
+    drawBase();
+    for(let i=0;i<size;i++){
+        for(let j=0;j<size;j++){
+            const idx = i*size+j;
+            const x = PAD + j*gridSize;
+            const y = PAD + i*gridSize;
+            if(state[idx]){
+                ctx.fillStyle=state[idx].match(/rgb.*?\)/)[0];
+                ctx.fillRect(x,y,gridSize,gridSize);
+                ctx.fillStyle='#fff';ctx.font='12px monospace';
+                const code = sorted.find(c=>colorData[c[0]].some(x=>x[1]===state[idx]))||"";
+                ctx.fillText(code,x+4,y+15);
+            }
+        }
+    }
+    await download(canvas,`方格标注图纸_${new Date().getTime()}.png`);
+
+    // TXT清单
+    const txt = `拼豆用料清单\n尺寸：${size}×${size}\n时间：${new Date().toLocaleString()}\n\n${sorted.map(c=>`${c}：${stats[c]}颗`).join('\n')}\n\n总计：${total}颗`;
+    const blob = new Blob([txt],{type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url;a.download=`用料清单_${new Date().getTime()}.txt`;
+    a.click();URL.revokeObjectURL(url);
+}
+
+function download(canvas,name){
+    return new Promise(res=>{
+        canvas.toBlob(b=>{
+            const a=document.createElement('a');
+            a.href=URL.createObjectURL(b);a.download=name;a.click();
+            URL.revokeObjectURL(a.href);res();
+        });
+    });
+}
+
+/* --------------------------
+事件绑定
+-------------------------- */
+document.getElementById("tabWrap").onclick = e=>{
     if(e.target.classList.contains("tab-item")){
         document.querySelectorAll(".tab-item").forEach(t=>t.classList.remove("active"));
         e.target.classList.add("active");
-        currentType=e.target.dataset.type;renderColors(currentType);
+        currentType = e.target.dataset.type;
+        renderColors(currentType);
     }
-})
-
-document.querySelector(".size-bar").addEventListener("click",e=>{
+}
+document.querySelector(".size-bar").onclick = e=>{
     if(e.target.classList.contains("size-btn")){
         document.querySelectorAll(".size-btn").forEach(b=>b.classList.remove("active"));
         e.target.classList.add("active");
         createGrid(+e.target.dataset.num);
     }
-})
-
-// 绑定撤销、重做按钮
-undoBtn.onclick = undo;
-redoBtn.onclick = redo;
+}
+undoBtn.onclick=undo;
+redoBtn.onclick=redo;
+saveBtn.onclick=exportAll;
 
 /* --------------------------
-模块7：初始化
+初始化
 -------------------------- */
 renderColors(currentType);
 createGrid(15);

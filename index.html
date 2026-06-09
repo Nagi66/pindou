@@ -9,7 +9,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* 消除移动端触摸默认滚动 */
+        /* 消除移动端触摸默认滚动，保障流畅滑动连画 */
         canvas {
             touch-action: none;
             -webkit-user-select: none;
@@ -79,13 +79,13 @@
                         <i data-lucide="redo" class="w-5 h-5"></i>
                     </button>
                     <div class="h-6 w-px bg-slate-200 mx-1"></div>
-                    <button id="toolPen" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium rounded-lg text-xs flex items-center gap-1" title="画笔 (支持滑动连画)">
+                    <button id="toolPen" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium rounded-lg text-xs flex items-center gap-1" title="画笔 (支持滑动连画，同色点击自动切换为单点/拖动擦除)">
                         <i data-lucide="pencil" class="w-3.5 h-3.5"></i> 画笔
                     </button>
-                    <button id="toolBucket" class="px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-lg text-xs flex items-center gap-1" title="油漆桶 (填充闭合区域)">
+                    <button id="toolBucket" class="px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-lg text-xs flex items-center gap-1" title="油漆桶 (填充闭合区域，在已填充的颜色上再次点击即可瞬间大面积清空)">
                         <i data-lucide="paint-bucket" class="w-3.5 h-3.5"></i> 填充
                     </button>
-                    <button id="toolEraser" class="px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-lg text-xs flex items-center gap-1" title="橡皮擦">
+                    <button id="toolEraser" class="px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-lg text-xs flex items-center gap-1" title="橡皮擦 (滑动批量擦除)">
                         <i data-lucide="eraser" class="w-3.5 h-3.5"></i> 橡皮
                     </button>
                 </div>
@@ -94,9 +94,11 @@
                 <div class="flex items-center gap-2">
                     <span class="text-xs text-slate-500 font-medium">规格:</span>
                     <select id="selectSize" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="14">14 × 14 (新手)</option>
-                        <option value="29" selected>29 × 29 (主流)</option>
-                        <option value="50">50 × 50 (进阶)</option>
+                        <option value="14">14 × 14 (迷你板)</option>
+                        <option value="29" selected>29 × 29 (标准拼豆板)</option>
+                        <option value="31">31 × 31 (通用中型板)</option>
+                        <option value="50">50 × 50 (2.6mm 小豆专用)</option>
+                        <option value="60">60 × 60 (大拼图拼接板)</option>
                     </select>
                     <button id="btnClear" class="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg font-medium transition flex items-center gap-1">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 清空
@@ -133,7 +135,7 @@
                     <div class="relative border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl p-4 text-center cursor-pointer transition">
                         <input type="file" id="imageInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
                         <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
-                        <span class="text-xs text-slate-600 block" id="uploadTip">点击或拖拽图片文件上传</span>
+                        <span class="text-xs text-slate-600 block truncate max-w-full px-2" id="uploadTip">点击或拖拽图片文件上传</span>
                     </div>
                 </div>
 
@@ -150,6 +152,11 @@
                     <button id="btnPixelize" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
                         <i data-lucide="wand-2" class="w-4 h-4"></i> 一键像素化转 MARD 色号
                     </button>
+                    
+                    <button id="btnRemoveTracer" class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                        <i data-lucide="image-off" class="w-4 h-4"></i> 移除参考底图
+                    </button>
+                    
                     <p class="text-[10px] text-slate-400 text-center">通过高保真颜色比对算法，自动提取最逼真的实体豆豆拼装板</p>
                 </div>
             </div>
@@ -219,10 +226,10 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button id="btnExportList" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                    <button id="btnExportList" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition" title="生成采购清单文本以供复制">
                         <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> 导出采购清单
                     </button>
-                    <button id="btnExportPNG" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                    <button id="btnExportPNG" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition" title="将当前画布渲染并下载为图片">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i> 导出作品图
                     </button>
                 </div>
@@ -256,63 +263,126 @@
     </div>
 
     <script>
-        // MARD 官方标准精简色号对照（JSON 数据结构设计，契合小程序结构）
-        const MARD_COLORS = {
-            "A (红粉色系)": [
-                { id: "A01", name: "正红", hex: "#E60012" },
-                { id: "A02", name: "大红", hex: "#B8000F" },
-                { id: "A03", name: "西瓜红", hex: "#FF4D55" },
-                { id: "A05", name: "樱花粉", hex: "#FFB6C1" },
-                { id: "A12", name: "玫瑰粉", hex: "#FF69B4" }
+        // 1. 完全接入用户整理好、最精准的 MARD 拼豆九大色系颜色和代码数据
+        const colorData = {
+            A: [
+                ["A01","#FAF5CD"],["A02","#FCFED6"],["A03","#FCFF92"],["A04","#F7EC5C"],["A05","#F0D83A"],
+                ["A06","#FDA951"],["A07","#FA8C4F"],["A08","#FBDA4D"],["A09","#F79D5F"],["A10","#F47E38"],
+                ["A11","#FEDB99"],["A12","#FDA276"],["A13","#FEC667"],["A14","#F75842"],["A15","#FBF65E"],
+                ["A16","#FEFF97"],["A17","#FDE173"],["A18","#FCBF80"],["A19","#FD7E77"],["A20","#F9D666"],
+                ["A21","#FAE393"],["A22","#EDF878"],["A23","#E4C8BA"],["A24","#F3F6A9"],["A25","#FDF785"],
+                ["A26","#FFC734"]
             ],
-            "B (黄橙色系)": [
-                { id: "B01", name: "柠檬黄", hex: "#FFEA00" },
-                { id: "B03", name: "中黄", hex: "#FFC408" },
-                { id: "B06", name: "橙红", hex: "#FF5F00" },
-                { id: "B12", name: "浅黄", hex: "#FFFDD0" }
+            B: [
+                ["B01","#DFF13B"],["B02","#64F343"],["B03","#A1F586"],["B04","#5FDF34"],["B05","#39E158"],
+                ["B06","#64E0A4"],["B07","#3EAE7C"],["B08","#1D9B54"],["B09","#2A5037"],["B10","#9AD1BA"],
+                ["B11","#627032"],["B12","#1A6E3D"],["B13","#C8E87D"],["B14","#ABE84F"],["B15","#305335"],
+                ["B16","#C0ED9C"],["B17","#9EB33E"],["B18","#E6ED4F"],["B19","#26B78E"],["B20","#CBECCF"],
+                ["B21","#18616A"],["B22","#0A4241"],["B23","#343B1A"],["B24","#E8FAA6"],["B25","#4E846D"],
+                ["B26","#907C35"],["B27","#D0E0AF"],["B28","#9EE5BB"],["B29","#C6DF5F"],["B30","#E3FBB1"],
+                ["B31","#B4E691"],["B32","#92AD60"]
             ],
-            "C (青绿色系)": [
-                { id: "C01", name: "正绿", hex: "#009E3C" },
-                { id: "C05", name: "薄荷绿", hex: "#A3D6C4" },
-                { id: "C08", name: "浅绿", hex: "#89D14C" },
-                { id: "C15", name: "军绿", hex: "#3A5F0B" }
+            C: [
+                ["C01","#F0FEE4"],["C02","#ABF8FE"],["C03","#A2E0F7"],["C04","#44CDFB"],["C05","#06AADF"],
+                ["C06","#54A7E9"],["C07","#3977CA"],["C08","#0F52BD"],["C09","#3349C3"],["C10","#3CBCE3"],
+                ["C11","#2ADED3"],["C12","#1E334E"],["C13","#CDE7FE"],["C14","#D5FCF7"],["C15","#21C5C4"],
+                ["C16","#1858A2"],["C17","#02D1F3"],["C18","#213244"],["C19","#18869D"],["C20","#1A70A9"],
+                ["C21","#BCDDFC"],["C22","#6BB1BB"],["C23","#C8E2FD"],["C24","#7EC5F9"],["C25","#A9E8E0"],
+                ["C26","#42ADCF"],["C27","#D0DEF9"],["C28","#BDCEE8"],["C29","#364A89"]
             ],
-            "D (蓝紫色系)": [
-                { id: "D01", name: "天蓝", hex: "#00A0E9" },
-                { id: "D03", name: "深蓝", hex: "#002A86" },
-                { id: "D08", name: "粉蓝", hex: "#89CFF0" },
-                { id: "D12", name: "罗兰紫", hex: "#6F2D91" },
-                { id: "D18", name: "薰衣草", hex: "#E6D1F2" }
+            D: [
+                ["D01","#ACB7EF"],["D02","#868DD3"],["D03","#3554AF"],["D04","#162D7B"],["D05","#B34EC6"],
+                ["D06","#B37BDC"],["D07","#8758A9"],["D08","#E3D2FE"],["D09","#D5B9F4"],["D10","#301A49"],
+                ["D11","#BEB9E2"],["D12","#DC99CE"],["D13","#B5038D"],["D14","#862993"],["D15","#2F1F8C"],
+                ["D16","#E2E4F0"],["D17","#C7D3F9"],["D18","#9A64B8"],["D19","#D8C2D9"],["D20","#9A35AD"],
+                ["D21","#940595"],["D22","#38389A"],["D23","#EADBF8"],["D24","#768AE1"],["D25","#4950C2"],
+                ["D26","#D6C6EB"]
             ],
-            "E (大地棕色系)": [
-                { id: "E01", name: "肤色", hex: "#FBD6C2" },
-                { id: "E03", name: "浅咖啡", hex: "#A87042" },
-                { id: "E06", name: "可可褐", hex: "#6F4E37" },
-                { id: "E12", name: "焦糖色", hex: "#C68E17" }
+            E: [
+                ["E01","#F6D4CB"],["E02","#FCC1DD"],["E03","#F6BDE8"],["E04","#E8649E"],["E05","#F0569F"],
+                ["E06","#EB4172"],["E07","#C53674"],["E08","#FDDBE9"],["E09","#E376C7"],["E10","#D13B95"],
+                ["E11","#F7DAD4"],["E12","#F693BF"],["E13","#F5026A"],["E14","#B5026A"],["E15","#FAD4BF"],
+                ["E16","#F5C9CA"],["E17","#FBF4EC"],["E18","#F7E3EC"],["E19","#F9C8DB"],["E20","#F6BBD1"],
+                ["E21","#D7C6CE"],["E22","#C09DA4"],["E23","#B38C9F"],["E24","#937D8A"],["E25","#DEBEE5"]
             ],
-            "F (黑白灰色系)": [
-                { id: "F01", name: "纯黑", hex: "#1A1A1A" },
-                { id: "F02", name: "高白", hex: "#FFFFFF" },
-                { id: "F03", name: "冷灰", hex: "#808080" },
-                { id: "F05", name: "水泥灰", hex: "#B3B3B3" }
+            F: [
+                ["F01","#FE9381"],["F02","#F63D4B"],["F03","#EE4E3E"],["F04","#FB2A40"],["F05","#E10328"],
+                ["F06","#913635"],["F07","#911932"],["F08","#BB0126"],["F09","#E0677A"],["F10","#874628"],
+                ["F11","#592323"],["F12","#F3536B"],["F13","#F45C45"],["F14","#FCADB2"],["F15","#D50527"],
+                ["F16","#F8C0A9"],["F17","#E89B7D"],["F18","#D07F4A"],["F19","#BE454A"],["F20","#C69495"],
+                ["F21","#F2B8C6"],["F22","#F7C3D0"],["F23","#ED806C"],["F24","#E09DAF"],["F25","#E84854"]
+            ],
+            G: [
+                ["G01","#FFE4D3"],["G02","#FCC6AC"],["G03","#F1C4A5"],["G04","#DCB387"],["G05","#E7B34E"],
+                ["G06","#E3A014"],["G07","#985C3A"],["G08","#713D2F"],["G09","#E4B685"],["G10","#DA8C42"],
+                ["G11","#DAC898"],["G12","#FEC993"],["G13","#B2714B"],["G14","#8B684C"],["G15","#F6F8E3"],
+                ["G16","#F2D8C1"],["G17","#77544E"],["G18","#FFE3D5"],["G19","#DD7D41"],["G20","#A5452F"],
+                ["G21","#B38561"]
+            ],
+            H: [
+                ["H01","#FFFFFF"],["H02","#FBFBFB"],["H03","#B4B4B4"],["H04","#878787"],["H05","#464648"],
+                ["H06","#2C2C2C"],["H07","#010101"],["H08","#E7D6DC"],["H09","#EFEDEE"],["H10","#EBEBEB"],
+                ["H11","#CDCDCD"],["H12","#FDF6EE"],["H13","#F4EDF1"],["H14","#CED7D4"],["H15","#9AA6A6"],
+                ["H16","#1B1213"],["H17","#F0EEEF"],["H18","#FCFFF6"],["H19","#F2EEE5"],["H20","#96A09F"],
+                ["H21","#F8FBE6"],["H22","#CACAD2"],["H23","#9B9C94"]
+            ],
+            M: [
+                ["M01","#BBC6B6"],["M02","#909994"],["M03","#697E81"],["M04","#E0D4BC"],["M05","#D1CCAF"],
+                ["M06","#B0AA86"],["M07","#B0A796"],["M08","#AE8082"],["M09","#A68862"],["M10","#C4B3BB"],
+                ["M11","#9D7693"],["M12","#644B51"],["M13","#C79266"],["M14","#C27563"],["M15","#747D7A"]
             ]
         };
 
-        // 扁平化色表用于高精度 RGB 颜色匹配
+        // 按分组类别生成更加友好的色谱名标签以供前端渲染联动
+        const MARD_COLORS = {};
+        const groupLabels = {
+            A: "A (明黄/橙橘色系)",
+            B: "B (青葱/绿色系)",
+            C: "C (海蓝/青水色系)",
+            D: "D (罗兰/紫黛色系)",
+            E: "E (嫣红/粉黛色系)",
+            F: "F (赤朱/深褐色系)",
+            G: "G (茶褐/大地色系)",
+            H: "H (水墨/灰白色系)",
+            M: "M (莫兰迪低饱和度)"
+        };
+
+        // 将扁平化集合与映射全部生成，保障匹配精度
         const ALL_MARD_COLORS = [];
-        Object.keys(MARD_COLORS).forEach(cat => {
-            MARD_COLORS[cat].forEach(color => {
-                ALL_MARD_COLORS.push(color);
+        window.MARD_COLOR_LIST = []; // 暴露出RGB结构便于算法比对
+
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substr(0,2),16);
+            const g = parseInt(hex.substr(2,2),16);
+            const b = parseInt(hex.substr(4,2),16);
+            return {r, g, b};
+        }
+
+        // 统一洗数据结构
+        Object.keys(colorData).forEach(cat => {
+            const labelName = groupLabels[cat] || `${cat} 系列`;
+            MARD_COLORS[labelName] = [];
+            colorData[cat].forEach(([code, hex]) => {
+                const rgb = hexToRgb(hex);
+                const colorObj = { id: code, name: code, hex: hex, r: rgb.r, g: rgb.g, b: rgb.b };
+                MARD_COLORS[labelName].push(colorObj);
+                ALL_MARD_COLORS.push(colorObj);
+                window.MARD_COLOR_LIST.push(rgb);
             });
         });
 
-        // 1. 系统核心状态 (对应小程序 Page.data)
+        // 2. 系统核心状态 (对应小程序 Page.data)
         let gridSize = 29;         // 默认网格规格
         let gridData = [];         // 二维数组 gridData[x][y] 保存具体的色号ID（如 "A01"）
-        let activeCategory = "A (红粉色系)";
-        let activeColor = ALL_MARD_COLORS[0]; // 当前选中的豆子
+        let activeCategory = Object.keys(MARD_COLORS)[0]; // 默认第一个分组
+        let activeColor = MARD_COLORS[activeCategory][0]; // 默认选中该组的第一颗豆
         let activeTool = "pen";    // pen, bucket, eraser
-        let appMode = "edit";      // edit, chart
+
+        // 拖拽行为状态锁定：'draw' (铺豆) / 'erase' (摘除/擦除)
+        let activeDragAction = "draw";
+
+        let appMode = "edit";      // edit (画布模式), chart (图纸模式)
 
         // 历史快照（用于撤销重做）
         let undoStack = [];
@@ -322,7 +392,7 @@
         let tracerImg = null;
         let tracerOpacity = 0.4;
 
-        // 2. DOM 元素初始化
+        // 3. DOM 元素初始化
         const canvas = document.getElementById('beadCanvas');
         const ctx = canvas.getContext('2d');
         const btnModeEdit = document.getElementById('btnModeEdit');
@@ -340,6 +410,7 @@
         const opacitySlider = document.getElementById('opacitySlider');
         const opacityLabel = document.getElementById('opacityLabel');
         const btnPixelize = document.getElementById('btnPixelize');
+        const btnRemoveTracer = document.getElementById('btnRemoveTracer'); // 移除底图
         const draftNameInput = document.getElementById('draftName');
         const btnSaveDraft = document.getElementById('btnSaveDraft');
         const draftList = document.getElementById('draftList');
@@ -354,19 +425,21 @@
         const btnCopyList = document.getElementById('btnCopyList');
         const btnCloseModal = document.getElementById('btnCloseModal');
 
-        // 3. 核心数组及数据初始化逻辑
+        let isDrawing = false;
+
+        // 4. 核心数组及数据初始化逻辑
         function initGrid() {
             gridData = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
             clearHistory();
             saveSnapshot();
         }
 
-        // 4. 自适应绘图渲染 (核心 Canvas 绘制)
+        // 5. 自适应绘图渲染 (Canvas 核心逻辑)
         function renderCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const size = canvas.width;
 
-            // 如果有底画，渲染底画
+            // 如果有底图，渲染底图
             if (tracerImg && appMode === 'edit') {
                 ctx.globalAlpha = tracerOpacity;
                 ctx.drawImage(tracerImg, 0, 0, size, size);
@@ -444,7 +517,7 @@
                         const x = rulerOffset + i * cellSize;
                         const y = rulerOffset + j * cellSize;
 
-                        // 1. 每隔 5/10 的网格线强化
+                        // 每隔 5 的网格线强化，便于辅助对齐
                         const isMajorLine = (i + 1) % 5 === 0 || (j + 1) % 5 === 0;
                         ctx.strokeStyle = isMajorLine ? '#94a3b8' : '#e2e8f0';
                         ctx.lineWidth = isMajorLine ? 1.5 : 0.8;
@@ -458,10 +531,10 @@
                                 ctx.fillStyle = beadColor.hex;
                                 ctx.fillRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
 
-                                // 智能文字亮暗对比判断 (Y = 0.299R + 0.587G + 0.114B)
+                                // 智能文字亮暗对比判断
                                 const contrastColor = getContrastColor(beadColor.hex);
 
-                                // 只有当格子大小足够打印文字时显示色号标记
+                                // 当格子大小足够打印文字时显示色号标记
                                 if (cellSize >= 16) {
                                     ctx.fillStyle = contrastColor;
                                     ctx.font = `600 ${Math.floor(cellSize * 0.45)}px font-mono, sans-serif`;
@@ -482,24 +555,20 @@
 
         // 绘制高逼真胶质拼豆 (带中央穿孔与边缘弧光)
         function drawRealisticBead(cx, cy, r, colorHex) {
-            // 外圈豆身
             ctx.fillStyle = colorHex;
             ctx.beginPath();
             ctx.arc(cx, cy, r, 0, Math.PI * 2);
             ctx.fill();
 
-            // 外部亮边立体渐变
             ctx.strokeStyle = 'rgba(255,255,255,0.15)';
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            // 内部凹陷中空（模拟实物拼豆穿孔）
-            ctx.fillStyle = '#f0f2f5'; // 与背景融合
+            ctx.fillStyle = '#f0f2f5';
             ctx.beginPath();
             ctx.arc(cx, cy, r * 0.35, 0, Math.PI * 2);
             ctx.fill();
 
-            // 内部孔的描边内壁
             ctx.strokeStyle = 'rgba(0,0,0,0.06)';
             ctx.stroke();
         }
@@ -513,12 +582,9 @@
             return y > 135 ? '#000000' : '#FFFFFF';
         }
 
-        // 5. 滑动连画及油漆桶核心算法
-        let isDrawing = false;
-
+        // 6. 交互算法：支持同色反转切换 (Toggle) 以及滑动方向判定锁定
         function getCellCoords(e) {
             const rect = canvas.getBoundingClientRect();
-            // 考虑触屏端和鼠标端位置获取
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
@@ -529,7 +595,6 @@
             const yCanvas = (clientY - rect.top) * scaleY;
 
             if (appMode === 'chart') {
-                // 图纸模式坐标换算（扣除标尺）
                 const rulerOffset = 40;
                 const activeSize = canvas.width - rulerOffset;
                 const cellSize = activeSize / gridSize;
@@ -537,7 +602,6 @@
                 const gridY = Math.floor((yCanvas - rulerOffset) / cellSize);
                 return { x: gridX, y: gridY };
             } else {
-                // 画布模式换算
                 const cellSize = canvas.width / gridSize;
                 const gridX = Math.floor(xCanvas / cellSize);
                 const gridY = Math.floor(yCanvas / cellSize);
@@ -545,13 +609,22 @@
             }
         }
 
+        // 滑动时按被锁定的滑动类型执行对应的画/擦逻辑
         function handleDrawAction(x, y) {
             if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
                 if (activeTool === 'pen') {
-                    if (gridData[x][y] !== activeColor.id) {
-                        gridData[x][y] = activeColor.id;
-                        renderCanvas();
-                        updateStatistics();
+                    if (activeDragAction === 'draw') {
+                        if (gridData[x][y] !== activeColor.id) {
+                            gridData[x][y] = activeColor.id;
+                            renderCanvas();
+                            updateStatistics();
+                        }
+                    } else if (activeDragAction === 'erase') {
+                        if (gridData[x][y] !== null) {
+                            gridData[x][y] = null;
+                            renderCanvas();
+                            updateStatistics();
+                        }
                     }
                 } else if (activeTool === 'eraser') {
                     if (gridData[x][y] !== null) {
@@ -575,7 +648,6 @@
                 if (gridData[x][y] === targetColor) {
                     gridData[x][y] = replacementColor;
 
-                    // 4 个方向泛洪
                     if (x > 0) queue.push([x - 1, y]);
                     if (x < gridSize - 1) queue.push([x + 1, y]);
                     if (y > 0) queue.push([x, y - 1]);
@@ -586,18 +658,37 @@
             updateStatistics();
         }
 
-        // 6. 交互事件处理
+        // 手指/鼠标按下：判定是“反转擦除”还是“普通铺豆”
         function onStart(e) {
             const { x, y } = getCellCoords(e);
             if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
                 isDrawing = true;
+                
                 if (activeTool === 'bucket') {
                     const target = gridData[x][y];
-                    const replacement = activeColor.id;
+                    // 🌟 油漆桶反向清空：如果点击的区域色值本身已经是当前选定色，执行大面积清空(null)
+                    const replacement = (target === activeColor.id) ? null : activeColor.id;
                     floodFill(x, y, target, replacement);
                     saveSnapshot();
-                } else {
-                    handleDrawAction(x, y);
+                } else if (activeTool === 'pen') {
+                    // 🌟 智能同色反转逻辑
+                    // 如果落笔点已经是当前颜色，则：1. 擦除该点；2. 锁定接下来的滑动基调为【批量擦除】
+                    if (gridData[x][y] === activeColor.id) {
+                        gridData[x][y] = null;
+                        activeDragAction = "erase";
+                    } else {
+                        // 否则（空位或其它颜色）：1. 铺上豆子；2. 锁定滑动基调为【铺豆画画】
+                        gridData[x][y] = activeColor.id;
+                        activeDragAction = "draw";
+                    }
+                    renderCanvas();
+                    updateStatistics();
+                } else if (activeTool === 'eraser') {
+                    // 纯橡皮擦起笔：只执行【批量擦除】
+                    gridData[x][y] = null;
+                    activeDragAction = "erase";
+                    renderCanvas();
+                    updateStatistics();
                 }
             }
         }
@@ -606,7 +697,6 @@
             if (!isDrawing) return;
             const { x, y } = getCellCoords(e);
             handleDrawAction(x, y);
-            // 阻止手势拖动导致页面滚动
             if (e.cancelable) e.preventDefault();
         }
 
@@ -629,16 +719,13 @@
 
         // 7. 撤销/重做与自动保存系统 (微信原生 wx.setStorageSync 完全对应 localStorage)
         function saveSnapshot() {
-            // 只保留最新的 20 步历史
             if (undoStack.length >= 20) undoStack.shift();
             
-            // 深拷贝当前棋盘
             const snapshot = JSON.stringify(gridData);
             undoStack.push(snapshot);
-            redoStack = []; // 清空重做栈
+            redoStack = []; 
             updateHistoryButtons();
             
-            // 自动同步缓存
             autoSaveToStorage();
         }
 
@@ -680,27 +767,30 @@
 
         // 自动保存至 localStorage
         function autoSaveToStorage() {
-            const data = {
-                gridSize,
-                gridData,
-                activeCategory,
-                activeColor: activeColor.id
-            };
-            localStorage.setItem('perler_autosave_prototype', JSON.stringify(data));
+            try {
+                const data = {
+                    gridSize,
+                    gridData,
+                    activeCategory,
+                    activeColor: activeColor.id
+                };
+                localStorage.setItem('perler_autosave_prototype', JSON.stringify(data));
+            } catch (e) {
+                console.warn('LocalStorage auto-save not fully supported in this sandboxed environment.');
+            }
         }
 
         // 读取自动保存
         function loadAutoSavedData() {
-            const saved = localStorage.getItem('perler_autosave_prototype');
-            if (saved) {
-                try {
+            try {
+                const saved = localStorage.getItem('perler_autosave_prototype');
+                if (saved) {
                     const parsed = JSON.parse(saved);
                     gridSize = parsed.gridSize || 29;
                     selectSize.value = gridSize;
-                    initGrid(); // 创建全新棋盘结构
+                    initGrid(); 
                     gridData = parsed.gridData;
                     
-                    // 匹配历史色号
                     const foundColor = ALL_MARD_COLORS.find(c => c.id === parsed.activeColor);
                     if (foundColor) {
                         activeColor = foundColor;
@@ -709,36 +799,25 @@
                     
                     clearHistory();
                     saveSnapshot();
-                } catch(e) {
+                } else {
                     initGrid();
                 }
-            } else {
+            } catch(e) {
                 initGrid();
             }
         }
 
-        // 8. 颜色匹配转换算法（图片像素化转拼豆的核心）
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-        }
-
-        // RGB欧式距离计算
+        // 8. 颜色匹配转换算法 (基于高保真 RGB 距离比对)
         function getColorDistance(r1, g1, b1, r2, g2, b2) {
             return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
         }
 
-        // 匹配最近的 MARD 注册色号
         function findClosestMARDColor(r, g, b) {
             let minDistance = Infinity;
             let closestColor = ALL_MARD_COLORS[0];
 
             ALL_MARD_COLORS.forEach(c => {
-                // 将 hex 转换为 RGB
-                let cr = parseInt(c.hex.substr(1, 2), 16);
-                let cg = parseInt(c.hex.substr(3, 2), 16);
-                let cb = parseInt(c.hex.substr(5, 2), 16);
-
-                let dist = getColorDistance(r, g, b, cr, cg, cb);
+                let dist = getColorDistance(r, g, b, c.r, c.g, c.b);
                 if (dist < minDistance) {
                     minDistance = dist;
                     closestColor = c;
@@ -751,17 +830,14 @@
         btnPixelize.onclick = () => {
             if (!tracerImg) return;
             
-            // 建立离线画布
             const offscreenCanvas = document.createElement('canvas');
             offscreenCanvas.width = gridSize;
             offscreenCanvas.height = gridSize;
             const octx = offscreenCanvas.getContext('2d');
 
-            // 绘制压缩比例图
             octx.drawImage(tracerImg, 0, 0, gridSize, gridSize);
             const imgData = octx.getImageData(0, 0, gridSize, gridSize).data;
 
-            // 遍历像素计算色号
             for (let x = 0; x < gridSize; x++) {
                 for (let y = 0; y < gridSize; y++) {
                     const idx = (y * gridSize + x) * 4;
@@ -771,7 +847,7 @@
                     const alpha = imgData[idx + 3];
 
                     if (alpha < 50) {
-                        gridData[x][y] = null; // 认为透明
+                        gridData[x][y] = null; 
                     } else {
                         const matched = findClosestMARDColor(r, g, b);
                         gridData[x][y] = matched.id;
@@ -783,8 +859,17 @@
             updateStatistics();
             saveSnapshot();
             
-            // 提示成功并切回画布模式
-            alert(`像素转换成功！已自动为您匹配 MARD 色系标准，并生成拼拼模板！`);
+            alert(`像素转换成功！已自动为您匹配您的 ${ALL_MARD_COLORS.length} 款官方 MARD 色号，并生成图纸！`);
+        };
+
+        // 一键卸载底图
+        btnRemoveTracer.onclick = () => {
+            tracerImg = null;
+            document.getElementById('tracerImage').src = "";
+            imageInput.value = "";
+            importControls.classList.add('hidden');
+            uploadTip.textContent = "点击或拖拽图片文件上传";
+            renderCanvas();
         };
 
         // 9. 动态 UI 生成与交互绑定
@@ -836,7 +921,7 @@
             });
         }
 
-        // 10. 实时数据统计 (用于图纸下方的汇总统计看板)
+        // 10. 实时数据统计
         function updateStatistics() {
             const counts = {};
             let total = 0;
@@ -884,7 +969,6 @@
             reader.onload = (event) => {
                 tracerImg = new Image();
                 tracerImg.onload = () => {
-                    // 显示控制台
                     uploadTip.textContent = `当前导入: ${file.name}`;
                     importControls.classList.remove('hidden');
                     renderCanvas();
@@ -955,28 +1039,31 @@
         // 13. 草稿箱管理 (LocalStorage 多档草稿实现)
         function renderDraftList() {
             draftList.innerHTML = '';
-            const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
-            
-            if (drafts.length === 0) {
-                draftList.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">暂无保存的草稿</p>`;
-                return;
-            }
+            try {
+                const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
+                if (drafts.length === 0) {
+                    draftList.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">暂无保存的草稿</p>`;
+                    return;
+                }
 
-            drafts.forEach((draft, idx) => {
-                const item = document.createElement('div');
-                item.className = "bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs";
-                item.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-bold text-slate-700 truncate max-w-[120px]">${draft.name}</span>
-                        <span class="text-[9px] text-slate-400">${draft.size}x${draft.size} · ${draft.time}</span>
-                    </div>
-                    <div class="flex gap-1 shrink-0">
-                        <button onclick="loadDraft(${idx})" class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-md font-medium">载入</button>
-                        <button onclick="deleteDraft(${idx})" class="p-1 hover:bg-red-50 text-red-500 rounded-md"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `;
-                draftList.appendChild(item);
-            });
+                drafts.forEach((draft, idx) => {
+                    const item = document.createElement('div');
+                    item.className = "bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs";
+                    item.innerHTML = `
+                        <div class="flex flex-col">
+                            <span class="font-bold text-slate-700 truncate max-w-[120px]">${draft.name}</span>
+                            <span class="text-[9px] text-slate-400">${draft.size}x${draft.size} · ${draft.time}</span>
+                        </div>
+                        <div class="flex gap-1 shrink-0">
+                            <button onclick="loadDraft(${idx})" class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-md font-medium">载入</button>
+                            <button onclick="deleteDraft(${idx})" class="p-1 hover:bg-red-50 text-red-500 rounded-md"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    `;
+                    draftList.appendChild(item);
+                });
+            } catch (e) {
+                draftList.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">草稿箱加载失败（沙箱环境限制）</p>`;
+            }
             lucide.createIcons();
         }
 
@@ -988,45 +1075,57 @@
                 return;
             }
 
-            const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
-            const now = new Date();
-            const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+            try {
+                const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
+                const now = new Date();
+                const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
 
-            drafts.push({
-                name,
-                size: gridSize,
-                data: gridData,
-                time: timeStr
-            });
+                drafts.push({
+                    name,
+                    size: gridSize,
+                    data: gridData,
+                    time: timeStr
+                });
 
-            localStorage.setItem('perler_drafts_collection', JSON.stringify(drafts));
-            draftNameInput.value = '';
-            renderDraftList();
-            alert(`草稿【${name}】保存成功！`);
+                localStorage.setItem('perler_drafts_collection', JSON.stringify(drafts));
+                draftNameInput.value = '';
+                renderDraftList();
+                alert(`草稿【${name}】保存成功！`);
+            } catch (e) {
+                alert("抱歉，当前沙箱环境安全限制，无法写入本地草稿箱。");
+            }
         };
 
         window.loadDraft = (idx) => {
-            const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
-            const draft = drafts[idx];
-            if (draft) {
-                gridSize = draft.size;
-                selectSize.value = gridSize;
-                initGrid();
-                gridData = draft.data;
-                renderCanvas();
-                updateStatistics();
-                clearHistory();
-                saveSnapshot();
-                alert(`成功载入草稿: ${draft.name}`);
+            try {
+                const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
+                const draft = drafts[idx];
+                if (draft) {
+                    gridSize = draft.size;
+                    selectSize.value = gridSize;
+                    initGrid();
+                    gridData = draft.data;
+                    renderCanvas();
+                    updateStatistics();
+                    clearHistory();
+                    saveSnapshot();
+                    alert(`成功载入草稿: ${draft.name}`);
+                }
+            } catch (e) {
+                alert("加载草稿失败。");
             }
         };
 
         window.deleteDraft = (idx) => {
             if (confirm("确定要删除这档本地草稿吗？")) {
-                const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
-                drafts.splice(idx, 1);
-                localStorage.setItem('perler_drafts_collection', JSON.stringify(drafts));
-                renderDraftList();
+                try {
+                    const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
+                    drafts.splice(idx, 1);
+                    localStorage.setItem('perler_drafts_collection', JSON.stringify(drafts));
+                    renderDraftList();
+                } catch (e) {
+                    alert("删除草稿失败。");
+                }
             }
         };
 
@@ -1055,13 +1154,17 @@
             text += `------------------------------------\n`;
             Object.keys(counts).sort().forEach(id => {
                 const bead = ALL_MARD_COLORS.find(c => c.id === id);
-                text += `【MARD-${id}】 ${bead ? bead.name : '未知色'} ： ${counts[id]} 颗\n`;
+                text += `【MARD-${id}】 ${beid ? bead.name : '未知色'} ： ${counts[id]} 颗\n`;
             });
             text += `------------------------------------\n`;
             text += `* 生成自微信小程序: 拼豆工坊`;
 
             exportTextContent.innerText = text;
             modalExport.classList.remove('hidden');
+        };
+
+        window.btnCloseModal = () => {
+            modalExport.classList.add('hidden');
         };
 
         btnCloseModal.onclick = () => {
@@ -1071,7 +1174,7 @@
         btnCopyList.onclick = () => {
             const text = exportTextContent.innerText;
             
-            // 采用 H5 经典剪切板拷贝，防止 iframe 沙箱阻止 navigator.clipboard
+            // 采用 H5 经典剪切板拷贝
             const textarea = document.createElement('textarea');
             textarea.value = text;
             document.body.appendChild(textarea);

@@ -126,7 +126,7 @@
                 const dstIdx = (y * dstW + x) * 4;
                 dstPix[dstIdx] = srcPix[srcIdx];
                 dstPix[dstIdx+1] = srcPix[srcIdx+1];
-                dstPix[dstIdx+2] = srcPix[srcIdx+2];
+                dstPix[dstIdx+2] = srcPix[dstIdx+2];
                 dstPix[dstIdx+3] = srcPix[srcIdx+3];
             }
         }
@@ -243,61 +243,61 @@
                     maxCnt = colorCount.get(k);
                     mainKey = k;
                 }
-            });;
-            g....forEach(k=> => => => mainColorMap....set(k, , , , mainKey));;;;
-        });;
+            });
+            g.forEach(k=> mainColorMap.set(k, mainKey));
+        });
 
         // 重绘矩阵 + 特征保护：像素<=5 保留原色
-        const finalMatrix =  =  =  = JSON....parse(JSON....stringify(matrix));;;;
-        for(let y====0; ; ; ; y<<<<size; ; ; ; y++++++++){
-            for(let x====0; ; ; ; x<<<<size; ; ; ; x++++++++){
-                const c =  =  =  = matrix[y][x];;;;
-                const key =  =  =  = `${c....r},${c....g},${c....b}`;;;;
-                const cnt =  =  =  = colorCount....get(key);;;;
+        const finalMatrix = JSON.parse(JSON.stringify(matrix));
+        for(let y=0; y<size; y++){
+            for(let x=0; x<size; x++){
+                const c = matrix[y][x];
+                const key = `${c.r},${c.g},${c.b}`;
+                const cnt = colorCount.get(key);
                 // 像素数<=5 作为特征色，不合并
-                if(cnt <=  <= 5) continue;;
+                if(cnt <= 5) continue;
 
-                const mainKey =  = mainColorMap..get(key);;
-                const [mr,,mg,,mb] =  = mainKey..split(',')..map(Number);;
-                finalMatrix[y][x] =  = {r::mr, , g::mg, , b::mb};;
+                const mainKey = mainColorMap.get(key);
+                const [mr,mg,mb] = mainKey.split(',').map(Number);
+                finalMatrix[y][x] = {r:mr, g:mg, b:mb};
             }
         }
-        return finalMatrix;;
+        return finalMatrix;
     }
 
     // ===================== 主流程：裁剪确认后执行全链路 =====================
-    confirmCrop..addEventListener('click', , async function(){
-        hideCropModal();;
-        loadingTip..style..display =  = 'block';;
-        const targetSize =  = window..CURRENT_GRID_SIZE;;
+    confirmCrop.addEventListener('click', function(){
+        hideCropModal();
+        loadingTip.style.display = 'block';
+        const targetSize = window.CURRENT_GRID_SIZE;
 
         // 1. 获取裁剪图像
-        const cropImgData =  = getCropImageData();;
+        const cropImgData = getCropImageData();
         // 2. 最近邻缩放
-        const scaleData =  = scaleNearest(cropImgData, , targetSize);;
+        const scaleData = scaleNearest(cropImgData, targetSize);
         // 3. 轮廓/空洞修复
-        const repairData =  = repairPixel(scaleData, , targetSize);;
+        const repairData = repairPixel(scaleData, targetSize);
         // 4. 匹配漫漫色库
-        let colorMatrix =  = matchMardColor(repairData);;
+        let colorMatrix = matchMardColor(repairData);
         // 5. HSV聚类精简 + 特征保护
-        colorMatrix =  = colorCluster(colorMatrix);;
+        colorMatrix = colorCluster(colorMatrix);
 
         // 回调传给主页面
-        if(typeof ImageConverter..onConvertComplete ===  === 'function'){
-            ImageConverter..onConvertComplete(colorMatrix);;
+        if(typeof ImageConverter.onConvertComplete === 'function'){
+            ImageConverter.onConvertComplete(colorMatrix);
         }
-        loadingTip..style..display =  = 'none';;
-    });;
+        loadingTip.style.display = 'none';
+    });
 
     // ===================== 对外公开接口 =====================
-    window..ImageConverter =  = {
-        onConvertComplete: : null,,
-        openImageSelector: : openFileSelect
-    };;
+    window.ImageConverter = {
+        onConvertComplete: null,
+        openImageSelector: openFileSelect
+    };
 
     // 文件选择监听
-    fileInput..addEventListener('change', , e=>=>{
-        const file =  = e..target..files[0];;
-        if(file) loadImage(file);;
-    });;
-})();;
+    fileInput.addEventListener('change', e=>{
+        const file = e.target.files[0];
+        if(file) loadImage(file);
+    });
+})();

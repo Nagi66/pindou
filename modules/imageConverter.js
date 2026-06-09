@@ -1,75 +1,56 @@
 (function(){
     const fileInput = document.getElementById('fileInput');
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const loadingTip = document.getElementById('loadingTip');
 
-    // 对外暴露全局对象
     window.ImageConverter = {
-        onConvertComplete: null,
-        openImageSelector: function(){
+        openImageSelector(){
+            fileInput.value = '';
             fileInput.click();
         }
     };
 
-    fileInput.addEventListener('change', function(e){
+    fileInput.addEventListener('change',(e)=>{
         const file = e.target.files[0];
         if(!file) return;
-
         const reader = new FileReader();
-        reader.onload = function(event){
+        reader.onload = (ev)=>{
             const img = new Image();
-            img.onload = function(){
-                const size = window.CURRENT_GRID_SIZE || 50;
-                canvas.width = size;
-                canvas.height = size;
-                ctx.clearRect(0,0,size,size);
-                ctx.drawImage(img, 0, 0, size, size);
-
-                const imageData = ctx.getImageData(0,0,size,size);
-                const data = imageData.data;
-                const colorList = window.MARD_COLOR_LIST;
-                const resultMatrix = [];
-
-                for(let y = 0; y < size; y++){
-                    resultMatrix[y] = [];
-                    for(let x = 0; x < size; x++){
-                        const idx = (y * size + x) * 4;
-                        const r = data[idx];
-                        const g = data[idx+1];
-                        const b = data[idx+2];
-
-                        // 就近匹配色库颜色
-                        let minDis = Infinity;
-                        let targetColor = {r:255,g:255,b:255};
-                        colorList.forEach(c=>{
-                            const dis = Math.pow(r-c.r,2) + Math.pow(g-c.g,2) + Math.pow(b-c.b,2);
-                            if(dis < minDis){
-                                minDis = dis;
-                                targetColor = c;
-                            }
-                        });
-                        resultMatrix[y][x] = targetColor;
-                    }
-                }
-
-                // 回调主逻辑
-                if(window.ImageConverter.onConvertComplete){
-                    window.ImageConverter.onConvertComplete(resultMatrix);
-                }
-
-                // 重置文件输入
-                fileInput.value = '';
+            img.onload = ()=>{
+                processImage(img);
             };
-            img.src = event.target.result;
+            img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
     });
 
-    // 加载/隐藏loading（修复引号）
-    function showLoading(flag){
-        const loading = document.getElementById('loading');
-        if(loading){
-            loading.style.display = flag ? 'block' : 'none';
-        }
+    function processImage(img) {
+        loadingTip.style.display = 'block';
+        setTimeout(()=>{
+            const size = window.CURRENT_GRID_SIZE || 50;
+            const cvs = document.createElement('canvas');
+            const ctx = cvs.getContext('2d');
+            cvs.width = size;
+            cvs.height = size;
+            ctx.drawImage(img,0,0,size,size);
+            const data = ctx.getImageData(0,0,size,size).data;
+            const colors = window.MARD_COLOR_LIST;
+            const result = [];
+
+            for(let i=0;i<data.length;i+=4){
+                const r = data[i];
+                const g = data[i+1];
+                const b = data[i+2];
+                let min = 999999;
+                let pick = colors[0];
+                colors.forEach(c=>{
+                    const d = (r-c.r)**2 + (g-c.g)**2 + (b-c.b)**2;
+                    if(d<min){ min=d; pick=c; }
+                });
+                result.push(pick);
+            }
+
+            window.importImageResult(result);
+            loadingTip.style.display = 'none';
+        }, 20);
     }
 })();

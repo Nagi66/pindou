@@ -2,51 +2,1106 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>拼豆设计器</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拼豆工坊 & 微信小程序交互原型</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 消除移动端触摸默认滚动 */
+        canvas {
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        /* 美化滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
-<body>
-    <div class="top-bar">
-        <div class="size-select">
-            <label>尺寸：</label>
-            <select id="sizeSelect">
-                <option value="50">50×50</option>
-                <option value="40">40×40</option>
-                <option value="30">30×30</option>
-                <option value="20">20×20</option>
-            </select>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+    <!-- 顶部导航 & 状态 -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                <i data-lucide="layout-grid" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    拼豆工坊 Prototype
+                    <span class="text-xs bg-green-100 text-green-700 font-normal px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                        已自动保存
+                    </span>
+                </h1>
+                <p class="text-xs text-slate-500">微信小程序前端交互 & 算法核心验证沙盒</p>
+            </div>
         </div>
-        <button id="importImgBtn">导入图片</button>
-        <button id="undoBtn">撤销</button>
-        <button id="redoBtn">重做</button>
-        <button id="saveImgBtn">导出效果图</button>
-        <button id="savePatternBtn">导出图纸</button>
+        <div class="flex items-center gap-2">
+            <!-- 模式切换 -->
+            <div class="bg-slate-100 p-1 rounded-lg flex gap-1">
+                <button id="btnModeEdit" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm flex items-center gap-1 transition">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> 画布模式
+                </button>
+                <button id="btnModeChart" class="px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 hover:text-slate-900 flex items-center gap-1 transition">
+                    <i data-lucide="map" class="w-3.5 h-3.5"></i> 图纸模式
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体工作区 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左侧/中央：Canvas 画布区域 -->
+        <div class="lg:col-span-8 flex flex-col gap-4">
+            <!-- 工具栏 -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-1.5">
+                    <button id="btnUndo" class="p-2 text-slate-600 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition disabled:opacity-40" title="撤销">
+                        <i data-lucide="undo" class="w-5 h-5"></i>
+                    </button>
+                    <button id="btnRedo" class="p-2 text-slate-600 hover:bg-slate-50 active:bg-slate-100 rounded-lg transition disabled:opacity-40" title="重做">
+                        <i data-lucide="redo" class="w-5 h-5"></i>
+                    </button>
+                    <div class="h-6 w-px bg-slate-200 mx-1"></div>
+                    <button id="toolPen" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium rounded-lg text-xs flex items-center gap-1" title="画笔 (支持滑动连画)">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i> 画笔
+                    </button>
+                    <button id="toolBucket" class="px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-lg text-xs flex items-center gap-1" title="油漆桶 (填充闭合区域)">
+                        <i data-lucide="paint-bucket" class="w-3.5 h-3.5"></i> 填充
+                    </button>
+                    <button id="toolEraser" class="px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-lg text-xs flex items-center gap-1" title="橡皮擦">
+                        <i data-lucide="eraser" class="w-3.5 h-3.5"></i> 橡皮
+                    </button>
+                </div>
+
+                <!-- 尺寸规格选择 -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-500 font-medium">规格:</span>
+                    <select id="selectSize" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="14">14 × 14 (新手)</option>
+                        <option value="29" selected>29 × 29 (主流)</option>
+                        <option value="50">50 × 50 (进阶)</option>
+                    </select>
+                    <button id="btnClear" class="px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg font-medium transition flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 清空
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas 容器 -->
+            <div class="bg-white p-4 rounded-2xl shadow-md border border-slate-100 flex items-center justify-center relative overflow-hidden" style="min-height: 520px;">
+                <div class="relative">
+                    <!-- 背景引导线/垫底图层 -->
+                    <div id="tracerContainer" class="absolute inset-0 pointer-events-none opacity-40 mix-blend-multiply flex items-center justify-center">
+                        <img id="tracerImage" src="" class="max-w-full max-h-full object-contain hidden" />
+                    </div>
+                    <!-- 主交互画布 -->
+                    <canvas id="beadCanvas" width="600" height="600" class="max-w-full h-auto bg-slate-50 rounded-lg border border-slate-300 shadow-sm"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：属性、草稿 & 导入工具 -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            
+            <!-- 1. 垫底图与像素化工具 -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <i data-lucide="image" class="w-5 h-5 text-indigo-500"></i>
+                    导入与辅助设计
+                </h3>
+                
+                <!-- 上传图片 -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs text-slate-500 font-semibold">上传本地图片 (支持底图跟拼/像素化)</label>
+                    <div class="relative border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl p-4 text-center cursor-pointer transition">
+                        <input type="file" id="imageInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
+                        <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+                        <span class="text-xs text-slate-600 block" id="uploadTip">点击或拖拽图片文件上传</span>
+                    </div>
+                </div>
+
+                <!-- 导入控制面板 -->
+                <div id="importControls" class="flex flex-col gap-3 hidden">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs flex flex-col gap-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-700">跟拼垫底图透明度</span>
+                            <span id="opacityLabel" class="font-mono text-indigo-600">40%</span>
+                        </div>
+                        <input type="range" id="opacitySlider" min="0" max="100" value="40" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                    </div>
+
+                    <button id="btnPixelize" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                        <i data-lucide="wand-2" class="w-4 h-4"></i> 一键像素化转 MARD 色号
+                    </button>
+                    <p class="text-[10px] text-slate-400 text-center">通过高保真颜色比对算法，自动提取最逼真的实体豆豆拼装板</p>
+                </div>
+            </div>
+
+            <!-- 2. 本地草稿箱 (不占用云端/无账号) -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4">
+                <h3 class="font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-3">
+                    <span class="flex items-center gap-2">
+                        <i data-lucide="archive" class="w-5 h-5 text-indigo-500"></i>
+                        本地作品草稿箱
+                    </span>
+                    <span class="text-xs font-normal text-slate-400">自动防丢</span>
+                </h3>
+
+                <div class="flex gap-2">
+                    <input type="text" id="draftName" placeholder="作品名字（如：皮卡丘）" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <button id="btnSaveDraft" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs rounded-lg transition">
+                        保存草稿
+                    </button>
+                </div>
+
+                <!-- 草稿列表 -->
+                <div id="draftList" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
+                    <p class="text-xs text-slate-400 text-center py-4">暂无保存的草稿</p>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <!-- 底部拼豆色盘 & 材料清单 -->
+    <div class="bg-white border-t border-slate-200 shadow-2xl sticky bottom-0 z-30">
+        <div class="max-w-7xl w-full mx-auto p-4 flex flex-col gap-4">
+            
+            <!-- 色盘区域 -->
+            <div class="flex flex-col gap-3">
+                <!-- 一级分类：MARD 色系大类 -->
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div class="flex gap-1.5 overflow-x-auto py-1 max-w-full shrink-0" id="colorTabs">
+                        <!-- 由JS动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 二级选择：具体的 MARD 颗粒色号 -->
+                <div class="flex gap-3 items-center">
+                    <div class="text-xs text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap">色号选择:</div>
+                    <div class="flex gap-2 overflow-x-auto py-1.5 pr-2 w-full" id="colorSubTabs">
+                        <!-- 由JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 材料统计清单 -->
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold">
+                        耗材统计
+                    </div>
+                    <div class="text-xs text-slate-600">
+                        当前画布共包含拼豆: <span id="totalBeadsCount" class="font-bold text-slate-900 font-mono text-sm">0</span> 颗
+                    </div>
+                </div>
+
+                <!-- 统计列表滚动栏 -->
+                <div class="flex-1 overflow-x-auto flex gap-3 items-center max-w-full py-1" id="statList">
+                    <span class="text-xs text-slate-400">未放置拼豆</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btnExportList" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                        <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> 导出采购清单
+                    </button>
+                    <button id="btnExportPNG" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> 导出作品图
+                    </button>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <div class="main-container">
-        <div class="color-tabs">
-            <div class="tab-item active" data-group="A">A组</div>
-            <div class="tab-item" data-group="B">B组</div>
-            <div class="tab-item" data-group="C">C组</div>
-            <div class="tab-item" data-group="D">D组</div>
-            <div class="tab-item" data-group="E">E组</div>
-            <div class="tab-item" data-group="F">F组</div>
-            <div class="tab-item" data-group="G">G组</div>
-            <div class="tab-item" data-group="H">H组</div>
-            <div class="tab-item" data-group="M">M组</div>
-        </div>
+    <!-- 弹窗：导出采购清单 -->
+    <div id="modalExport" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative flex flex-col gap-4">
+            <h3 class="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <i data-lucide="shopping-cart" class="text-indigo-600"></i>
+                MARD 拼豆采购清单
+            </h3>
+            <p class="text-xs text-slate-500">实体拼豆对照制作耗材，复制清单直奔网店配豆：</p>
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 max-h-60 overflow-y-auto font-mono text-xs text-slate-700" id="exportTextContent">
+                <!-- 文本将在这里生成 -->
+            </div>
 
-        <div class="color-panel" id="colorPanel"></div>
-        <div class="grid-container">
-            <div id="grid"></div>
+            <div class="flex justify-end gap-2 mt-2">
+                <button id="btnCopyList" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> 复制清单
+                </button>
+                <button id="btnCloseModal" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-semibold transition">
+                    关闭
+                </button>
+            </div>
         </div>
     </div>
 
-    <input type="file" id="fileInput" accept="image/*" style="display:none;">
-    <div id="loadingTip" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#000; color:#fff; padding:10px 20px; border-radius:6px;">处理中...</div>
+    <script>
+        // MARD 官方标准精简色号对照（JSON 数据结构设计，契合小程序结构）
+        const MARD_COLORS = {
+            "A (红粉色系)": [
+                { id: "A01", name: "正红", hex: "#E60012" },
+                { id: "A02", name: "大红", hex: "#B8000F" },
+                { id: "A03", name: "西瓜红", hex: "#FF4D55" },
+                { id: "A05", name: "樱花粉", hex: "#FFB6C1" },
+                { id: "A12", name: "玫瑰粉", hex: "#FF69B4" }
+            ],
+            "B (黄橙色系)": [
+                { id: "B01", name: "柠檬黄", hex: "#FFEA00" },
+                { id: "B03", name: "中黄", hex: "#FFC408" },
+                { id: "B06", name: "橙红", hex: "#FF5F00" },
+                { id: "B12", name: "浅黄", hex: "#FFFDD0" }
+            ],
+            "C (青绿色系)": [
+                { id: "C01", name: "正绿", hex: "#009E3C" },
+                { id: "C05", name: "薄荷绿", hex: "#A3D6C4" },
+                { id: "C08", name: "浅绿", hex: "#89D14C" },
+                { id: "C15", name: "军绿", hex: "#3A5F0B" }
+            ],
+            "D (蓝紫色系)": [
+                { id: "D01", name: "天蓝", hex: "#00A0E9" },
+                { id: "D03", name: "深蓝", hex: "#002A86" },
+                { id: "D08", name: "粉蓝", hex: "#89CFF0" },
+                { id: "D12", name: "罗兰紫", hex: "#6F2D91" },
+                { id: "D18", name: "薰衣草", hex: "#E6D1F2" }
+            ],
+            "E (大地棕色系)": [
+                { id: "E01", name: "肤色", hex: "#FBD6C2" },
+                { id: "E03", name: "浅咖啡", hex: "#A87042" },
+                { id: "E06", name: "可可褐", hex: "#6F4E37" },
+                { id: "E12", name: "焦糖色", hex: "#C68E17" }
+            ],
+            "F (黑白灰色系)": [
+                { id: "F01", name: "纯黑", hex: "#1A1A1A" },
+                { id: "F02", name: "高白", hex: "#FFFFFF" },
+                { id: "F03", name: "冷灰", hex: "#808080" },
+                { id: "F05", name: "水泥灰", hex: "#B3B3B3" }
+            ]
+        };
 
-    <script src="color.js"></script>
-    <script src="modules/imageConverter.js"></script>
-    <script src="main.js"></script>
+        // 扁平化色表用于高精度 RGB 颜色匹配
+        const ALL_MARD_COLORS = [];
+        Object.keys(MARD_COLORS).forEach(cat => {
+            MARD_COLORS[cat].forEach(color => {
+                ALL_MARD_COLORS.push(color);
+            });
+        });
+
+        // 1. 系统核心状态 (对应小程序 Page.data)
+        let gridSize = 29;         // 默认网格规格
+        let gridData = [];         // 二维数组 gridData[x][y] 保存具体的色号ID（如 "A01"）
+        let activeCategory = "A (红粉色系)";
+        let activeColor = ALL_MARD_COLORS[0]; // 当前选中的豆子
+        let activeTool = "pen";    // pen, bucket, eraser
+        let appMode = "edit";      // edit, chart
+
+        // 历史快照（用于撤销重做）
+        let undoStack = [];
+        let redoStack = [];
+
+        // 辅助底图属性
+        let tracerImg = null;
+        let tracerOpacity = 0.4;
+
+        // 2. DOM 元素初始化
+        const canvas = document.getElementById('beadCanvas');
+        const ctx = canvas.getContext('2d');
+        const btnModeEdit = document.getElementById('btnModeEdit');
+        const btnModeChart = document.getElementById('btnModeChart');
+        const btnUndo = document.getElementById('btnUndo');
+        const btnRedo = document.getElementById('btnRedo');
+        const toolPen = document.getElementById('toolPen');
+        const toolBucket = document.getElementById('toolBucket');
+        const toolEraser = document.getElementById('toolEraser');
+        const selectSize = document.getElementById('selectSize');
+        const btnClear = document.getElementById('btnClear');
+        const imageInput = document.getElementById('imageInput');
+        const uploadTip = document.getElementById('uploadTip');
+        const importControls = document.getElementById('importControls');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const opacityLabel = document.getElementById('opacityLabel');
+        const btnPixelize = document.getElementById('btnPixelize');
+        const draftNameInput = document.getElementById('draftName');
+        const btnSaveDraft = document.getElementById('btnSaveDraft');
+        const draftList = document.getElementById('draftList');
+        const colorTabs = document.getElementById('colorTabs');
+        const colorSubTabs = document.getElementById('colorSubTabs');
+        const totalBeadsCount = document.getElementById('totalBeadsCount');
+        const statList = document.getElementById('statList');
+        const btnExportList = document.getElementById('btnExportList');
+        const btnExportPNG = document.getElementById('btnExportPNG');
+        const modalExport = document.getElementById('modalExport');
+        const exportTextContent = document.getElementById('exportTextContent');
+        const btnCopyList = document.getElementById('btnCopyList');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+
+        // 3. 核心数组及数据初始化逻辑
+        function initGrid() {
+            gridData = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            clearHistory();
+            saveSnapshot();
+        }
+
+        // 4. 自适应绘图渲染 (核心 Canvas 绘制)
+        function renderCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const size = canvas.width;
+
+            // 如果有底画，渲染底画
+            if (tracerImg && appMode === 'edit') {
+                ctx.globalAlpha = tracerOpacity;
+                ctx.drawImage(tracerImg, 0, 0, size, size);
+                ctx.globalAlpha = 1.0;
+            }
+
+            if (appMode === 'edit') {
+                // 画布模式: 模拟真实点阵拼豆模板
+                const cellSize = size / gridSize;
+                ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)';
+                ctx.lineWidth = 1;
+
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const x = i * cellSize;
+                        const y = j * cellSize;
+
+                        // 绘制模板的固定圆钉
+                        ctx.fillStyle = '#e2e8f0';
+                        ctx.beginPath();
+                        ctx.arc(x + cellSize/2, y + cellSize/2, 2, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // 绘制边框辅助线
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+
+                        const colorId = gridData[i][j];
+                        if (colorId) {
+                            const beadColor = ALL_MARD_COLORS.find(c => c.id === colorId);
+                            if (beadColor) {
+                                drawRealisticBead(x + cellSize/2, y + cellSize/2, cellSize/2 - 1, beadColor.hex);
+                            }
+                        }
+                    }
+                }
+            } else {
+                // 图纸模式: 带有标尺尺标、格内打印色号马赛克
+                const rulerOffset = 40; // 留出左边和上边 40px 用于打印坐标
+                const activeSize = size - rulerOffset;
+                const cellSize = activeSize / gridSize;
+
+                // 绘制左、上侧标尺背景
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(0, 0, size, rulerOffset);
+                ctx.fillRect(0, 0, rulerOffset, size);
+
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(rulerOffset, 0);
+                ctx.lineTo(rulerOffset, size);
+                ctx.moveTo(0, rulerOffset);
+                ctx.lineTo(size, rulerOffset);
+                ctx.stroke();
+
+                // 标尺文字与高亮网格绘制
+                ctx.fillStyle = '#475569';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                for (let i = 0; i < gridSize; i++) {
+                    // X 轴标尺 (顶部)
+                    const xTextPos = rulerOffset + i * cellSize + cellSize/2;
+                    ctx.fillText(i + 1, xTextPos, rulerOffset/2);
+
+                    // Y 轴标尺 (左侧)
+                    const yTextPos = rulerOffset + i * cellSize + cellSize/2;
+                    ctx.fillText(i + 1, rulerOffset/2, yTextPos);
+                }
+
+                // 绘制图纸格点
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const x = rulerOffset + i * cellSize;
+                        const y = rulerOffset + j * cellSize;
+
+                        // 1. 每隔 5/10 的网格线强化
+                        const isMajorLine = (i + 1) % 5 === 0 || (j + 1) % 5 === 0;
+                        ctx.strokeStyle = isMajorLine ? '#94a3b8' : '#e2e8f0';
+                        ctx.lineWidth = isMajorLine ? 1.5 : 0.8;
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+
+                        const colorId = gridData[i][j];
+                        if (colorId) {
+                            const beadColor = ALL_MARD_COLORS.find(c => c.id === colorId);
+                            if (beadColor) {
+                                // 绘制标准拼豆马赛克方块
+                                ctx.fillStyle = beadColor.hex;
+                                ctx.fillRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+
+                                // 智能文字亮暗对比判断 (Y = 0.299R + 0.587G + 0.114B)
+                                const contrastColor = getContrastColor(beadColor.hex);
+
+                                // 只有当格子大小足够打印文字时显示色号标记
+                                if (cellSize >= 16) {
+                                    ctx.fillStyle = contrastColor;
+                                    ctx.font = `600 ${Math.floor(cellSize * 0.45)}px font-mono, sans-serif`;
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'middle';
+                                    ctx.fillText(colorId, x + cellSize/2, y + cellSize/2);
+                                }
+                            }
+                        } else {
+                            // 未拼接格子
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 绘制高逼真胶质拼豆 (带中央穿孔与边缘弧光)
+        function drawRealisticBead(cx, cy, r, colorHex) {
+            // 外圈豆身
+            ctx.fillStyle = colorHex;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 外部亮边立体渐变
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 内部凹陷中空（模拟实物拼豆穿孔）
+            ctx.fillStyle = '#f0f2f5'; // 与背景融合
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 内部孔的描边内壁
+            ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+            ctx.stroke();
+        }
+
+        // 智能亮度对比算法
+        function getContrastColor(hex) {
+            let r = parseInt(hex.substr(1, 2), 16);
+            let g = parseInt(hex.substr(3, 2), 16);
+            let b = parseInt(hex.substr(5, 2), 16);
+            let y = 0.299 * r + 0.587 * g + 0.114 * b;
+            return y > 135 ? '#000000' : '#FFFFFF';
+        }
+
+        // 5. 滑动连画及油漆桶核心算法
+        let isDrawing = false;
+
+        function getCellCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            // 考虑触屏端和鼠标端位置获取
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const xCanvas = (clientX - rect.left) * scaleX;
+            const yCanvas = (clientY - rect.top) * scaleY;
+
+            if (appMode === 'chart') {
+                // 图纸模式坐标换算（扣除标尺）
+                const rulerOffset = 40;
+                const activeSize = canvas.width - rulerOffset;
+                const cellSize = activeSize / gridSize;
+                const gridX = Math.floor((xCanvas - rulerOffset) / cellSize);
+                const gridY = Math.floor((yCanvas - rulerOffset) / cellSize);
+                return { x: gridX, y: gridY };
+            } else {
+                // 画布模式换算
+                const cellSize = canvas.width / gridSize;
+                const gridX = Math.floor(xCanvas / cellSize);
+                const gridY = Math.floor(yCanvas / cellSize);
+                return { x: gridX, y: gridY };
+            }
+        }
+
+        function handleDrawAction(x, y) {
+            if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+                if (activeTool === 'pen') {
+                    if (gridData[x][y] !== activeColor.id) {
+                        gridData[x][y] = activeColor.id;
+                        renderCanvas();
+                        updateStatistics();
+                    }
+                } else if (activeTool === 'eraser') {
+                    if (gridData[x][y] !== null) {
+                        gridData[x][y] = null;
+                        renderCanvas();
+                        updateStatistics();
+                    }
+                }
+            }
+        }
+
+        // 闭合区域快速填充（经典 4 向 Flood Fill 算法）
+        function floodFill(startX, startY, targetColor, replacementColor) {
+            if (targetColor === replacementColor) return;
+            if (gridData[startX][startY] !== targetColor) return;
+
+            const queue = [[startX, startY]];
+            while (queue.length > 0) {
+                const [x, y] = queue.shift();
+
+                if (gridData[x][y] === targetColor) {
+                    gridData[x][y] = replacementColor;
+
+                    // 4 个方向泛洪
+                    if (x > 0) queue.push([x - 1, y]);
+                    if (x < gridSize - 1) queue.push([x + 1, y]);
+                    if (y > 0) queue.push([x, y - 1]);
+                    if (y < gridSize - 1) queue.push([x, y + 1]);
+                }
+            }
+            renderCanvas();
+            updateStatistics();
+        }
+
+        // 6. 交互事件处理
+        function onStart(e) {
+            const { x, y } = getCellCoords(e);
+            if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+                isDrawing = true;
+                if (activeTool === 'bucket') {
+                    const target = gridData[x][y];
+                    const replacement = activeColor.id;
+                    floodFill(x, y, target, replacement);
+                    saveSnapshot();
+                } else {
+                    handleDrawAction(x, y);
+                }
+            }
+        }
+
+        function onMove(e) {
+            if (!isDrawing) return;
+            const { x, y } = getCellCoords(e);
+            handleDrawAction(x, y);
+            // 阻止手势拖动导致页面滚动
+            if (e.cancelable) e.preventDefault();
+        }
+
+        function onEnd() {
+            if (isDrawing) {
+                isDrawing = false;
+                saveSnapshot();
+            }
+        }
+
+        // 鼠标监听
+        canvas.addEventListener('mousedown', onStart);
+        canvas.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+
+        // 移动端 Touch 触摸监听
+        canvas.addEventListener('touchstart', onStart, { passive: false });
+        canvas.addEventListener('touchmove', onMove, { passive: false });
+        canvas.addEventListener('touchend', onEnd);
+
+        // 7. 撤销/重做与自动保存系统 (微信原生 wx.setStorageSync 完全对应 localStorage)
+        function saveSnapshot() {
+            // 只保留最新的 20 步历史
+            if (undoStack.length >= 20) undoStack.shift();
+            
+            // 深拷贝当前棋盘
+            const snapshot = JSON.stringify(gridData);
+            undoStack.push(snapshot);
+            redoStack = []; // 清空重做栈
+            updateHistoryButtons();
+            
+            // 自动同步缓存
+            autoSaveToStorage();
+        }
+
+        function clearHistory() {
+            undoStack = [];
+            redoStack = [];
+            updateHistoryButtons();
+        }
+
+        function updateHistoryButtons() {
+            btnUndo.disabled = undoStack.length <= 1;
+            btnRedo.disabled = redoStack.length === 0;
+        }
+
+        btnUndo.onclick = () => {
+            if (undoStack.length > 1) {
+                const current = undoStack.pop();
+                redoStack.push(current);
+                const prev = undoStack[undoStack.length - 1];
+                gridData = JSON.parse(prev);
+                renderCanvas();
+                updateStatistics();
+                updateHistoryButtons();
+                autoSaveToStorage();
+            }
+        };
+
+        btnRedo.onclick = () => {
+            if (redoStack.length > 0) {
+                const next = redoStack.pop();
+                undoStack.push(next);
+                gridData = JSON.parse(next);
+                renderCanvas();
+                updateStatistics();
+                updateHistoryButtons();
+                autoSaveToStorage();
+            }
+        };
+
+        // 自动保存至 localStorage
+        function autoSaveToStorage() {
+            const data = {
+                gridSize,
+                gridData,
+                activeCategory,
+                activeColor: activeColor.id
+            };
+            localStorage.setItem('perler_autosave_prototype', JSON.stringify(data));
+        }
+
+        // 读取自动保存
+        function loadAutoSavedData() {
+            const saved = localStorage.getItem('perler_autosave_prototype');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    gridSize = parsed.gridSize || 29;
+                    selectSize.value = gridSize;
+                    initGrid(); // 创建全新棋盘结构
+                    gridData = parsed.gridData;
+                    
+                    // 匹配历史色号
+                    const foundColor = ALL_MARD_COLORS.find(c => c.id === parsed.activeColor);
+                    if (foundColor) {
+                        activeColor = foundColor;
+                        activeCategory = parsed.activeCategory;
+                    }
+                    
+                    clearHistory();
+                    saveSnapshot();
+                } catch(e) {
+                    initGrid();
+                }
+            } else {
+                initGrid();
+            }
+        }
+
+        // 8. 颜色匹配转换算法（图片像素化转拼豆的核心）
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+
+        // RGB欧式距离计算
+        function getColorDistance(r1, g1, b1, r2, g2, b2) {
+            return Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
+        }
+
+        // 匹配最近的 MARD 注册色号
+        function findClosestMARDColor(r, g, b) {
+            let minDistance = Infinity;
+            let closestColor = ALL_MARD_COLORS[0];
+
+            ALL_MARD_COLORS.forEach(c => {
+                // 将 hex 转换为 RGB
+                let cr = parseInt(c.hex.substr(1, 2), 16);
+                let cg = parseInt(c.hex.substr(3, 2), 16);
+                let cb = parseInt(c.hex.substr(5, 2), 16);
+
+                let dist = getColorDistance(r, g, b, cr, cg, cb);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestColor = c;
+                }
+            });
+            return closestColor;
+        }
+
+        // 一键像素化转盘处理
+        btnPixelize.onclick = () => {
+            if (!tracerImg) return;
+            
+            // 建立离线画布
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = gridSize;
+            offscreenCanvas.height = gridSize;
+            const octx = offscreenCanvas.getContext('2d');
+
+            // 绘制压缩比例图
+            octx.drawImage(tracerImg, 0, 0, gridSize, gridSize);
+            const imgData = octx.getImageData(0, 0, gridSize, gridSize).data;
+
+            // 遍历像素计算色号
+            for (let x = 0; x < gridSize; x++) {
+                for (let y = 0; y < gridSize; y++) {
+                    const idx = (y * gridSize + x) * 4;
+                    const r = imgData[idx];
+                    const g = imgData[idx + 1];
+                    const b = imgData[idx + 2];
+                    const alpha = imgData[idx + 3];
+
+                    if (alpha < 50) {
+                        gridData[x][y] = null; // 认为透明
+                    } else {
+                        const matched = findClosestMARDColor(r, g, b);
+                        gridData[x][y] = matched.id;
+                    }
+                }
+            }
+
+            renderCanvas();
+            updateStatistics();
+            saveSnapshot();
+            
+            // 提示成功并切回画布模式
+            alert(`像素转换成功！已自动为您匹配 MARD 色系标准，并生成拼拼模板！`);
+        };
+
+        // 9. 动态 UI 生成与交互绑定
+
+        // 生成一级色号 Tab
+        function renderColorTabs() {
+            colorTabs.innerHTML = '';
+            Object.keys(MARD_COLORS).forEach(cat => {
+                const button = document.createElement('button');
+                button.className = `px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                    activeCategory === cat ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                }`;
+                button.textContent = cat;
+                button.onclick = () => {
+                    activeCategory = cat;
+                    renderColorTabs();
+                    renderColorSubTabs();
+                };
+                colorTabs.appendChild(button);
+            });
+        }
+
+        // 生成二级具体的拼豆颗粒选择
+        function renderColorSubTabs() {
+            colorSubTabs.innerHTML = '';
+            const list = MARD_COLORS[activeCategory];
+            list.forEach(c => {
+                const item = document.createElement('button');
+                item.className = `flex items-center gap-2 px-3 py-2 rounded-xl border transition shrink-0 ${
+                    activeColor.id === c.id ? 'border-indigo-600 bg-indigo-50/50 scale-105' : 'border-slate-200 bg-white hover:border-slate-300'
+                }`;
+                
+                const contrast = getContrastColor(c.hex);
+                item.innerHTML = `
+                    <span class="w-5 h-5 rounded-full border border-black/10 flex items-center justify-center font-bold text-[8px] shadow-sm" style="background-color: ${c.hex}; color: ${contrast}">
+                        ${c.id[0]}
+                    </span>
+                    <div class="text-left leading-none">
+                        <div class="text-xs font-bold text-slate-800">${c.id}</div>
+                        <div class="text-[9px] text-slate-500">${c.name}</div>
+                    </div>
+                `;
+
+                item.onclick = () => {
+                    activeColor = c;
+                    renderColorSubTabs();
+                };
+                colorSubTabs.appendChild(item);
+            });
+        }
+
+        // 10. 实时数据统计 (用于图纸下方的汇总统计看板)
+        function updateStatistics() {
+            const counts = {};
+            let total = 0;
+
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const colorId = gridData[i][j];
+                    if (colorId) {
+                        counts[colorId] = (counts[colorId] || 0) + 1;
+                        total++;
+                    }
+                }
+            }
+
+            totalBeadsCount.textContent = total;
+
+            if (total === 0) {
+                statList.innerHTML = `<span class="text-xs text-slate-400">画布空白，赶紧动笔拼一个吧</span>`;
+                return;
+            }
+
+            // 拼装色卡汇总
+            statList.innerHTML = '';
+            Object.keys(counts).sort().forEach(id => {
+                const bead = ALL_MARD_COLORS.find(c => c.id === id);
+                if (bead) {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 shadow-sm";
+                    div.innerHTML = `
+                        <span class="w-3.5 h-3.5 rounded-full border border-black/5" style="background-color: ${bead.hex}"></span>
+                        <span class="text-slate-800">${id}</span>
+                        <span class="text-indigo-600">x${counts[id]}颗</span>
+                    `;
+                    statList.appendChild(div);
+                }
+            });
+        }
+
+        // 11. 底图导入处理器
+        imageInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                tracerImg = new Image();
+                tracerImg.onload = () => {
+                    // 显示控制台
+                    uploadTip.textContent = `当前导入: ${file.name}`;
+                    importControls.classList.remove('hidden');
+                    renderCanvas();
+                };
+                tracerImg.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // 透明度滑动条
+        opacitySlider.oninput = (e) => {
+            tracerOpacity = e.target.value / 100;
+            opacityLabel.textContent = `${e.target.value}%`;
+            renderCanvas();
+        };
+
+        // 清空画布
+        btnClear.onclick = () => {
+            if (confirm("确定要清空整张拼豆画布吗？清空后可以随时撤销。")) {
+                initGrid();
+                renderCanvas();
+                updateStatistics();
+            }
+        };
+
+        // 尺寸变更重构
+        selectSize.onchange = (e) => {
+            gridSize = parseInt(e.target.value);
+            initGrid();
+            renderCanvas();
+            updateStatistics();
+        };
+
+        // 工具切换监听
+        toolPen.onclick = () => setActiveTool('pen');
+        toolBucket.onclick = () => setActiveTool('bucket');
+        toolEraser.onclick = () => setActiveTool('eraser');
+
+        function setActiveTool(tool) {
+            activeTool = tool;
+            [toolPen, toolBucket, toolEraser].forEach(btn => {
+                btn.className = "px-3 py-1.5 text-slate-600 hover:bg-slate-50 rounded-lg text-xs flex items-center gap-1";
+            });
+            if (tool === 'pen') {
+                toolPen.className = "px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium rounded-lg text-xs flex items-center gap-1";
+            } else if (tool === 'bucket') {
+                toolBucket.className = "px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium rounded-lg text-xs flex items-center gap-1";
+            } else if (tool === 'eraser') {
+                toolEraser.className = "px-3 py-1.5 bg-indigo-50 text-indigo-700 font-medium rounded-lg text-xs flex items-center gap-1";
+            }
+        }
+
+        // 12. 视图模式切换 (画布模式 / 图纸辅助模式)
+        btnModeEdit.onclick = () => {
+            appMode = "edit";
+            btnModeEdit.className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm flex items-center gap-1 transition";
+            btnModeChart.className = "px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 hover:text-slate-900 flex items-center gap-1 transition";
+            renderCanvas();
+        };
+
+        btnModeChart.onclick = () => {
+            appMode = "chart";
+            btnModeChart.className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm flex items-center gap-1 transition";
+            btnModeEdit.className = "px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 hover:text-slate-900 flex items-center gap-1 transition";
+            renderCanvas();
+        };
+
+        // 13. 草稿箱管理 (LocalStorage 多档草稿实现)
+        function renderDraftList() {
+            draftList.innerHTML = '';
+            const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
+            
+            if (drafts.length === 0) {
+                draftList.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">暂无保存的草稿</p>`;
+                return;
+            }
+
+            drafts.forEach((draft, idx) => {
+                const item = document.createElement('div');
+                item.className = "bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs";
+                item.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-bold text-slate-700 truncate max-w-[120px]">${draft.name}</span>
+                        <span class="text-[9px] text-slate-400">${draft.size}x${draft.size} · ${draft.time}</span>
+                    </div>
+                    <div class="flex gap-1 shrink-0">
+                        <button onclick="loadDraft(${idx})" class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-md font-medium">载入</button>
+                        <button onclick="deleteDraft(${idx})" class="p-1 hover:bg-red-50 text-red-500 rounded-md"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `;
+                draftList.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        // 保存草稿
+        btnSaveDraft.onclick = () => {
+            const name = draftNameInput.value.trim();
+            if (!name) {
+                alert("请输入草稿名称再保存");
+                return;
+            }
+
+            const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
+            const now = new Date();
+            const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
+            drafts.push({
+                name,
+                size: gridSize,
+                data: gridData,
+                time: timeStr
+            });
+
+            localStorage.setItem('perler_drafts_collection', JSON.stringify(drafts));
+            draftNameInput.value = '';
+            renderDraftList();
+            alert(`草稿【${name}】保存成功！`);
+        };
+
+        window.loadDraft = (idx) => {
+            const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
+            const draft = drafts[idx];
+            if (draft) {
+                gridSize = draft.size;
+                selectSize.value = gridSize;
+                initGrid();
+                gridData = draft.data;
+                renderCanvas();
+                updateStatistics();
+                clearHistory();
+                saveSnapshot();
+                alert(`成功载入草稿: ${draft.name}`);
+            }
+        };
+
+        window.deleteDraft = (idx) => {
+            if (confirm("确定要删除这档本地草稿吗？")) {
+                const drafts = JSON.parse(localStorage.getItem('perler_drafts_collection') || '[]');
+                drafts.splice(idx, 1);
+                localStorage.setItem('perler_drafts_collection', JSON.stringify(drafts));
+                renderDraftList();
+            }
+        };
+
+        // 14. 清单与图片文件导出控制
+        btnExportList.onclick = () => {
+            const counts = {};
+            let total = 0;
+
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const id = gridData[i][j];
+                    if (id) {
+                        counts[id] = (counts[id] || 0) + 1;
+                        total++;
+                    }
+                }
+            }
+
+            if (total === 0) {
+                alert("画布空空如也，无需生成采购清单。");
+                return;
+            }
+
+            let text = `========= MARD 拼豆采购清单 =========\n`;
+            text += `创作总数量：${total} 颗\n`;
+            text += `------------------------------------\n`;
+            Object.keys(counts).sort().forEach(id => {
+                const bead = ALL_MARD_COLORS.find(c => c.id === id);
+                text += `【MARD-${id}】 ${bead ? bead.name : '未知色'} ： ${counts[id]} 颗\n`;
+            });
+            text += `------------------------------------\n`;
+            text += `* 生成自微信小程序: 拼豆工坊`;
+
+            exportTextContent.innerText = text;
+            modalExport.classList.remove('hidden');
+        };
+
+        btnCloseModal.onclick = () => {
+            modalExport.classList.add('hidden');
+        };
+
+        btnCopyList.onclick = () => {
+            const text = exportTextContent.innerText;
+            
+            // 采用 H5 经典剪切板拷贝，防止 iframe 沙箱阻止 navigator.clipboard
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert("采购清单已成功复制到剪贴板，快发给配豆老板吧！");
+            } catch(e) {
+                alert("由于沙箱环境限制，复制失败，请手动长按下方文字复制。");
+            }
+            document.body.removeChild(textarea);
+        };
+
+        // 导出作品高清图 (PNG)
+        btnExportPNG.onclick = () => {
+            const link = document.createElement('a');
+            link.download = `拼豆设计图_${gridSize}x${gridSize}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+
+        // 15. 初始化运行
+        window.onload = () => {
+            loadAutoSavedData();
+            renderColorTabs();
+            renderColorSubTabs();
+            renderDraftList();
+            updateStatistics();
+            lucide.createIcons();
+        };
+    </script>
 </body>
 </html>

@@ -3,501 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>拼豆模拟器</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{height:100vh;overflow:hidden;display:flex}
-.wrap-all{display:flex;width:100%;height:100%;}
-
-.left-sidebar{
-    display:flex;
-    height:100%;
-}
-.tab-big{
-    width:70px;background:#f2f2f2;display:flex;flex-direction:column;
-}
-.tab-item{
-    padding:16px 4px;text-align:center;cursor:pointer;border-bottom:1px solid #ddd;font-size:13px;
-}
-.tab-item.active{background:#333;color:#fff}
-
-.color-side{
-    width:130px;padding:10px;background:#f9f9f9;overflow-y:auto;
-}
-.color-list{
-    display:grid;grid-template-columns: repeat(2,52px);gap:8px;justify-content:center;
-}
-.color-item{
-    width:52px;height:62px;display:flex;flex-direction:column;align-items:center;cursor:pointer;
-}
-.color-block{
-    width:42px;height:42px;border:1px solid #aaa;border-radius:50%;
-    position:relative;
-}
-
-/* --------- 最终完美文字样式 --------- */
-.color-name{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    font-size:10px;
-    font-weight: bold;
-    color:#000;
-    /* 清晰白色外描边，不发虚，不变白 */
-    text-shadow: 
-        0 0 1px rgba(255,255,255,0.8),
-        0 0 2px rgba(255,255,255,0.6);
-    z-index:2;
-}
-/* ----------------------------------- */
-
-.right-main{
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    height:100%;
-    padding:24px;
-}
-.top-toolbar{
-    padding:10px 12px;
-    background:rgba(28,28,28,0.72);
-    backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-    border-radius:16px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    box-shadow:0 4px 14px rgba(0,0,0,0.18);
-}
-.left-group{
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-.right-group{
-    display:flex;
-    gap:8px;
-}
-#sizeSelect,
-.undo-btn,.redo-btn,.saveImgBtn,.saveDraftBtn{
-    height:34px;
-    border-radius:12px;
-    border:none;
-    background:rgba(255,255,255,0.9);
-    color:#000;
-    cursor:pointer;
-    padding:0 10px;
-}
-#sizeSelect{
-    padding-right:18px;
-    appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='12px' viewBox='0 0 24 24' width='12px' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat:no-repeat;
-    background-position:right 8px center;
-}
-.undo-btn:disabled,.redo-btn:disabled{
-    background:rgba(255,255,255,0.2);
-    color:rgba(255,255,255,0.5);
-    cursor:not-allowed;
-}
-#sizeSelect:hover:not(:disabled),
-.undo-btn:hover:not(:disabled),
-.redo-btn:hover:not(:disabled),
-.saveImgBtn:hover:not(:disabled),
-.saveDraftBtn:hover:not(:disabled){
-    background:rgba(255,255,255,0.95);
-}
-
-.canvas-box{
-    flex:1;padding-top:24px;overflow:auto;background:#f7f7f7;
-    display:flex;align-items:center;justify-content:center;
-}
-#grid{display:grid;gap:1px;width:fit-content;padding:6px;}
-.cell{
-    width:20px;height:20px;cursor:pointer;border-radius:50%;
-    background:#f7f7f7 radial-gradient(#dddddd 12%, transparent 12.1%);
-    transform:scale(1);
-    transform-origin:center center;
-    transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
-}
-.cell.popLight{
-    filter:brightness(1.6);
-}
-
-.previewMask{
-    position:fixed;left:0;top:0;width:100vw;height:100vh;
-    background:rgba(0,0,0,0.75);
-    z-index:999;
-    display:none;
-    align-items:center;justify-content:center;
-}
-.previewImg{
-    max-width:92vw;max-height:92vh;border:8px solid #fff;
-}
-
-@media(max-width:768px){
-    body{height:auto;overflow:auto}
-    .wrap-all{flex-direction:column;height:auto}
-    .left-sidebar{flex-direction:column;width:100%}
-    .tab-big{width:100%;flex-direction:row;flex-wrap:wrap}
-    .tab-item{flex:1;min-width:70px;padding:8px 2px;border-bottom:1px solid #ddd;border-right:1px solid #ddd}
-    .color-side{width:100%;overflow-x:auto;overflow-y:hidden}
-    .color-list{display:flex;flex-wrap:nowrap;gap:8px;width:max-content;}
-    .right-main{padding:12px;}
-}
-</style>
+    <title>拼豆编辑器 - 图片转图纸</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap-all">
-    <div class="left-sidebar">
-        <div class="tab-big" id="tabWrap">
-            <div class="tab-item active" data-type="A">A</div>
-            <div class="tab-item" data-type="B">B</div>
-            <div class="tab-item" data-type="C">C</div>
-            <div class="tab-item" data-type="D">D</div>
-            <div class="tab-item" data-type="E">E</div>
-            <div class="tab-item" data-type="F">F</div>
-            <div class="tab-item" data-type="G">G</div>
-            <div class="tab-item" data-type="H">H</div>
-            <div class="tab-item" data-type="M">M</div>
-        </div>
-        <div class="color-side">
-            <div class="color-list" id="colorBox"></div>
+    <!-- 顶部工具栏 -->
+    <div class="toolbar">
+        <select id="sizeSelect">
+            <option value="30">30 × 30</option>
+            <option value="40">40 × 40</option>
+            <option value="50" selected>50 × 50</option>
+            <option value="60">60 × 60</option>
+            <option value="70">70 × 70</option>
+            <option value="80">80 × 80</option>
+        </select>
+
+        <!-- 居中：导入图像按钮 -->
+        <button id="importImgBtn" class="tool-btn">导入图像</button>
+
+        <button id="undoBtn" class="tool-btn">撤销</button>
+        <button id="exportBtn" class="tool-btn">导出图纸</button>
+    </div>
+
+    <!-- 拼豆网格容器 -->
+    <div id="grid"></div>
+
+    <!-- 色板区域 -->
+    <div class="color-panel" id="colorPanel"></div>
+
+    <!-- 裁剪弹窗 + 遮罩 默认隐藏 -->
+    <div class="mask" id="mask">
+        <div class="crop-modal">
+            <h3>裁剪图片（仅支持正方形选区）</h3>
+            <div class="crop-preview">
+                <canvas id="previewCanvas"></canvas>
+                <div class="crop-box" id="cropBox"></div>
+            </div>
+            <div class="crop-btn-group">
+                <button id="confirmCrop">确认并生成图纸</button>
+                <button id="cancelCrop">取消</button>
+            </div>
         </div>
     </div>
-    <div class="right-main">
-        <div class="top-toolbar">
-            <div class="left-group">
-                <select id="sizeSelect">
-                    <option value="15">15×15</option>
-                    <option value="20">20×20</option>
-                    <option value="25">25×25</option>
-                    <option value="30">30×30</option>
-                    <option value="40">40×40</option>
-                    <option value="50">50×50</option>
-                </select>
-                <button class="undo-btn" id="undoBtn">撤销</button>
-                <button class="redo-btn" id="redoBtn">重做</button>
-            </div>
-            <div class="right-group">
-                <button class="saveImgBtn" id="saveImgBtn">保存效果图</button>
-                <button class="saveDraftBtn" id="saveDraftBtn">保存图纸</button>
-            </div>
-        </div>
-        <div class="canvas-box">
-            <div id="grid"></div>
-        </div>
-    </div>
-</div>
 
-<div class="previewMask" id="previewMask">
-    <img class="previewImg" id="previewImgEle">
-</div>
+    <!-- 加载提示 -->
+    <div class="loading-tip" id="loadingTip">处理中，请稍候...</div>
 
-<audio id="popAudio" preload="auto" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3">
+    <!-- 隐藏文件选择器 -->
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
 
-<script src="color.js"></script>
-<script>
-let currentType = "A";
-let currentColor = "#FFFFFF";
-let currentCode = "A01";
-let history = [];
-let redoStack = [];
-const MAX_HISTORY = 50;
-let cellCodeList = [];
-
-// 两套独立孔径参数
-const VIEW_HOLE_RATE = 0.32;    // 页面画布显示孔径
-const EXPORT_HOLE_RATE = 0.38;  // 导出效果图孔径
-
-let audioUnlock = false;
-
-const undoBtn = document.getElementById('undoBtn');
-const redoBtn = document.getElementById('redoBtn');
-const saveImgBtn = document.getElementById('saveImgBtn');
-const saveDraftBtn = document.getElementById('saveDraftBtn');
-const previewMask = document.getElementById('previewMask');
-const previewImgEle = document.getElementById('previewImgEle');
-const popAudio = document.getElementById('popAudio');
-const sizeSelect = document.getElementById('sizeSelect');
-
-previewMask.onclick = e=>{
-    if(e.target === previewMask) previewMask.style.display = 'none';
-}
-function updateBtnState(){
-    undoBtn.disabled = history.length === 0;
-    redoBtn.disabled = redoStack.length === 0;
-}
-// 页面渲染使用VIEW_HOLE_RATE
-function setRing(el,color){
-    el.style.background=`radial-gradient(transparent ${VIEW_HOLE_RATE*100}%, ${color} ${VIEW_HOLE_RATE*100+0.1}%)`;
-}
-function playBeadAnim(el){
-    if(!audioUnlock){
-        popAudio.play().then(()=>audioUnlock=true).catch(()=>{});
-    }else{
-        popAudio.currentTime=0;
-        popAudio.play().catch(()=>{});
-    }
-    el.style.transform="scale(1.3)";
-    setTimeout(()=>{el.style.transform="scale(0.85)"},80);
-    setTimeout(()=>{
-        el.style.transform="scale(1)";
-        el.classList.add("popLight");
-        setTimeout(()=>el.classList.remove("popLight"),100);
-    },160);
-}
-function renderColors(type){
-    const box = document.getElementById("colorBox");
-    box.innerHTML = "";
-    colorData[type].forEach(([code, hex])=>{
-        const item = document.createElement("div");
-        item.className="color-item";
-        item.innerHTML=`<div class="color-block" style="background:${hex}" title="${code}"><div class="color-name">${code}</div></div>`;
-        item.onclick=()=>{
-            currentColor=hex;
-            currentCode=code;
-            document.querySelectorAll(".color-block").forEach(b=>b.style.outline="none");
-            item.querySelector(".color-block").style.outline="2px solid #333";
-        };
-        box.appendChild(item);
-    })
-}
-function createGrid(size){
-    const grid=document.getElementById("grid");
-    grid.innerHTML="";
-    grid.style.gridTemplateColumns=`repeat(${size},20px)`;
-    history = [];redoStack = [];
-    cellCodeList = new Array(size*size).fill("");
-    for(let i=0;i<size*size;i++){
-        const cell=document.createElement("div");
-        cell.className="cell";
-        cell.dataset.index = i;
-        cell.onclick = function(){
-            const idx = +this.dataset.index;
-            if(cellCodeList[idx] && cellCodeList[idx]===currentCode){
-                saveHistory();redoStack = [];
-                cellCodeList[idx] = "";
-                this.style.removeProperty('background');
-                updateBtnState();
-            }else{
-                saveHistory();redoStack = [];
-                cellCodeList[idx] = currentCode;
-                setRing(this, currentColor);
-                playBeadAnim(this);
-                updateBtnState();
-            }
-        }
-        grid.appendChild(cell);
-    }
-    updateBtnState();
-}
-function saveHistory(){
-    history.push([...cellCodeList]);
-    if(history.length > MAX_HISTORY) history.shift();
-}
-function applyHistory(list){
-    cellCodeList = [...list];
-    const cells = document.querySelectorAll('.cell');
-    cells.forEach((c,i)=>{
-        const code = cellCodeList[i];
-        if(code){
-            const hex = getHexByCode(code);
-            setRing(c, hex);
-        }else c.style.removeProperty('background');
-    });
-}
-function getHexByCode(code){
-    for(const k in colorData){
-        const find = colorData[k].find(x=>x[0]===code);
-        if(find) return find[1];
-    }
-    return "#ccc";
-}
-function undo(){
-    if(history.length===0)return;
-    redoStack.push([...cellCodeList]);
-    applyHistory(history.pop());
-    updateBtnState();
-}
-function redo(){
-    if(redoStack.length===0)return;
-    history.push([...cellCodeList]);
-    if(history.length>MAX_HISTORY)history.shift();
-    applyHistory(redoStack.pop());
-    updateBtnState();
-}
-
-function drawCoordAndGrid(ox, oy, size, gs, ctx){
-    ctx.strokeStyle="#ddd";ctx.lineWidth=1;
-    for(let i=0;i<=size;i++){
-        ctx.beginPath();ctx.moveTo(ox+i*gs, oy);ctx.lineTo(ox+i*gs, oy+size*gs);ctx.stroke();
-        ctx.beginPath();ctx.moveTo(ox, oy+i*gs);ctx.lineTo(ox+size*gs, oy+i*gs);ctx.stroke();
-    }
-    ctx.fillStyle="#000";
-    ctx.font="bold 16px sans-serif";
-    for(let i=0;i<size;i++){
-        ctx.fillText(i+1, ox+gs*(i+0.5)-8, oy-8);
-        ctx.fillText(i+1, ox-25, oy+gs*(i+0.5)+5);
-    }
-}
-
-function previewEffectImg(){
-    const size = Math.sqrt(cellCodeList.length);
-    const list = [...cellCodeList];
-    const stats = {};let total=0;
-    for(let c of list){if(c){stats[c]=(stats[c]||0)+1;total++}}
-    const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-
-    const FIXED_W = 900,PAD=35,BOTTOM=90;
-    const gridSize = Math.floor((FIXED_W-PAD*2)/size);
-    const H = PAD*2 + gridSize*size + BOTTOM;
-    const cvs = document.createElement('canvas');
-    const ctx = cvs.getContext('2d');
-    cvs.width=FIXED_W;cvs.height=H;
-    ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
-    drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
-
-    for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-            const idx=i*size+j;const cd=list[idx];
-            if(!cd)continue;
-            const col=getHexByCode(cd);
-            const cx=PAD+j*gridSize+gridSize/2;
-            const cy=PAD+i*gridSize+gridSize/2;
-            const r=gridSize/2;
-            ctx.fillStyle=col;
-            ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-            // 导出使用EXPORT_HOLE_RATE
-            ctx.fillStyle="#f7f7f7";
-            ctx.beginPath();ctx.arc(cx,cy,r*EXPORT_HOLE_RATE,0,Math.PI*2);ctx.fill();
-        }
-    }
-
-    ctx.fillStyle="#222";ctx.fillRect(0,H-BOTTOM,FIXED_W,BOTTOM);
-    ctx.fillStyle="#fff";
-    ctx.font="bold 16px sans-serif";
-    ctx.fillText(`尺寸：${size}×${size}｜总豆子：${total}颗`,15,H-BOTTOM+26);
-
-    let drawX = 15;
-    const itemY = H-BOTTOM+42;
-    const paddingSide = 8;
-    sorted.forEach(key=>{
-        const textStr = `${key}(${stats[key]})`;
-        ctx.font="bold 15px sans-serif";
-        const txtW = ctx.measureText(textStr).width;
-        const boxW = txtW + paddingSide*2;
-        const boxH =36;
-        const clr = getHexByCode(key);
-
-        ctx.fillStyle=clr;
-        ctx.beginPath();
-        ctx.roundRect(drawX,itemY,boxW,boxH,4);
-        ctx.fill();
-
-        ctx.textAlign="center";
-        ctx.strokeStyle="#fff";
-        ctx.lineWidth=2;
-        ctx.strokeText(textStr,drawX+boxW/2,itemY+boxH/2+5);
-        ctx.fillStyle="#000";
-        ctx.fillText(textStr,drawX+boxW/2,itemY+boxH/2+5);
-
-        ctx.textAlign="left";
-        drawX += boxW+6;
-    })
-
-    previewImgEle.src = cvs.toDataURL("image/png");
-    previewMask.style.display="flex";
-}
-
-function previewDraftImg(){
-    const size = Math.sqrt(cellCodeList.length);
-    const list = [...cellCodeList];
-    const stats = {};let total=0;
-    for(let c of list){if(c){stats[c]=(stats[c]||0)+1;total++}}
-    const sorted = Object.keys(stats).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-
-    const FIXED_W = 900,PAD=35,BOTTOM=90;
-    const gridSize = Math.floor((FIXED_W-PAD*2)/size);
-    const H = PAD*2 + gridSize*size + BOTTOM;
-    const cvs = document.createElement('canvas');
-    const ctx = cvs.getContext('2d');
-    cvs.width=FIXED_W;cvs.height=H;
-    ctx.fillStyle="#fff";ctx.fillRect(0,0,FIXED_W,H);
-    drawCoordAndGrid(PAD,PAD,size,gridSize,ctx);
-
-    for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-            const idx=i*size+j;const cd=list[idx];
-            if(!cd)continue;
-            const col=getHexByCode(cd);
-            const x=PAD+j*gridSize;
-            const y=PAD+i*gridSize;
-            ctx.fillStyle=col;ctx.fillRect(x,y,gridSize,gridSize);
-            ctx.font="12px monospace";
-            ctx.textAlign="center";
-            ctx.strokeStyle="#fff";
-            ctx.lineWidth=2;
-            ctx.strokeText(cd,x+gridSize/2,y+gridSize/2+5);
-            ctx.fillStyle="#000";
-            ctx.fillText(cd,x+gridSize/2,y+gridSize/2+5);
-            ctx.textAlign="left";
-        }
-    }
-
-    ctx.fillStyle="#222";ctx.fillRect(0,H-BOTTOM,FIXED_W,BOTTOM);
-    ctx.fillStyle="#fff";
-    ctx.font="bold 16px sans-serif";
-    ctx.fillText(`尺寸：${size}×${size}｜总豆子：${total}颗`,15,H-BOTTOM+26);
-
-    let drawX = 15;
-    const itemY = H-BOTTOM+42;
-    const paddingSide = 8;
-    sorted.forEach(key=>{
-        const textStr = `${key}(${stats[key]})`;
-        ctx.font="bold 15px sans-serif";
-        const txtW = ctx.measureText(textStr).width;
-        const boxW = txtW + paddingSide*2;
-        const boxH =36;
-        const clr = getHexByCode(key);
-
-        ctx.fillStyle=clr;
-        ctx.beginPath();
-        ctx.roundRect(drawX,itemY,boxW,boxH,4);
-        ctx.fill();
-
-        ctx.textAlign="center";
-        ctx.strokeStyle="#fff";
-        ctx.lineWidth=2;
-        ctx.strokeText(textStr,drawX+boxW/2,itemY+boxH/2+5);
-        ctx.fillStyle="#000";
-        ctx.fillText(textStr,drawX+boxW/2,itemY+boxH/2+5);
-
-        ctx.textAlign="left";
-        drawX += boxW+6;
-    })
-
-    previewImgEle.src = cvs.toDataURL("image/png");
-    previewMask.style.display="flex";
-}
-
-sizeSelect.onchange=()=>createGrid(+sizeSelect.value);
-saveImgBtn.onclick=previewEffectImg;
-saveDraftBtn.onclick=previewDraftImg;
-undoBtn.onclick=undo;redoBtn.onclick=redo;
-document.getElementById("tabWrap").onclick = e=>{
-    if(e.target.classList.contains("tab-item")){
-        document.querySelectorAll(".tab-item").forEach(t=>t.classList.remove("active"));
-        e.target.classList.add("active");
-        currentType = e.target.dataset.type;
-        renderColors(currentType);
-    }
-}
-
-renderColors(currentType);
-createGrid(15);
-</script>
+    <!-- 引入脚本（顺序不能乱） -->
+    <script src="color.js"></script>
+    <script src="modules/imageConverter.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>

@@ -2,28 +2,49 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>拼豆图片转换</title>
+    <title>拼豆设计器</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 顶部控制区 -->
-    <div class="control-bar">
-        <select id="sizeSelect">
-            <option value="50">50 × 50</option>
-            <option value="30">30 × 30</option>
-            <option value="20">20 × 20</option>
-        </select>
+    <div class="top-bar">
+        <div class="size-select">
+            <label>尺寸：</label>
+            <select id="sizeSelect">
+                <option value="50">50×50</option>
+                <option value="40">40×40</option>
+                <option value="30">30×30</option>
+                <option value="20">20×20</option>
+            </select>
+        </div>
         <button id="importImgBtn">导入图片</button>
-        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        <button id="undoBtn">撤销</button>
+        <button id="redoBtn">重做</button>
+        <button id="saveImgBtn">导出效果图</button>
+        <button id="savePatternBtn">导出图纸</button>
     </div>
 
-    <!-- 色板区域 -->
-    <div id="colorPanel"></div>
+    <div class="main-container">
+        <div class="color-tabs">
+            <div class="tab-item active" data-group="A">A组</div>
+            <div class="tab-item" data-group="B">B组</div>
+            <div class="tab-item" data-group="C">C组</div>
+            <div class="tab-item" data-group="D">D组</div>
+            <div class="tab-item" data-group="E">E组</div>
+            <div class="tab-item" data-group="F">F组</div>
+            <div class="tab-item" data-group="G">G组</div>
+            <div class="tab-item" data-group="H">H组</div>
+            <div class="tab-item" data-group="M">M组</div>
+        </div>
 
-    <!-- 网格画布 -->
-    <div id="grid"></div>
+        <div class="color-panel" id="colorPanel"></div>
+        <div class="grid-container">
+            <div id="grid"></div>
+        </div>
+    </div>
 
-    <!-- 脚本加载顺序：颜色库 → 图片模块 → 主逻辑 -->
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+    <div id="loadingTip" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#000; color:#fff; padding:10px 20px; border-radius:6px;">处理中...</div>
+
     <script src="color.js"></script>
     <script src="modules/imageConverter.js"></script>
     <script src="main.js"></script>

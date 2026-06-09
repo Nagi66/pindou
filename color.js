@@ -1,3 +1,4 @@
+// 漫漫拼豆色库
 const colorData = {
 A: [
     ["A01","#FAF5CD"],["A02","#FCFED6"],["A03","#FCFF92"],["A04","#F7EC5C"],["A05","#F0D83A"],
@@ -66,3 +67,22 @@ M: [
     ["M11","#9D7693"],["M12","#644B51"],["M13","#C79266"],["M14","#C27563"],["M15","#747D7A"]
 ]
 };
+
+// 转换为程序可用的 RGB 数组
+window.MARD_COLOR_LIST = [];
+
+function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    const r = parseInt(hex.substr(0,2), 16);
+    const g = parseInt(hex.substr(2,2), 16);
+    const b = parseInt(hex.substr(4,2), 16);
+    return { r, g, b };
+}
+
+// 遍历所有颜色
+for(let group in colorData) {
+    colorData[group].forEach(item => {
+        const colorObj = hexToRgb(item[1]);
+        window.MARD_COLOR_LIST.push(colorObj);
+    });
+}

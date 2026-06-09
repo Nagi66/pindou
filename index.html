@@ -2,57 +2,28 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>拼豆编辑器 - 图片转图纸</title>
+    <title>拼豆图片转换</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 顶部工具栏 -->
-    <div class="toolbar">
+    <!-- 顶部控制区 -->
+    <div class="control-bar">
         <select id="sizeSelect">
+            <option value="50">50 × 50</option>
             <option value="30">30 × 30</option>
-            <option value="40">40 × 40</option>
-            <option value="50" selected>50 × 50</option>
-            <option value="60">60 × 60</option>
-            <option value="70">70 × 70</option>
-            <option value="80">80 × 80</option>
+            <option value="20">20 × 20</option>
         </select>
-
-        <!-- 居中：导入图像按钮 -->
-        <button id="importImgBtn" class="tool-btn">导入图像</button>
-
-        <button id="undoBtn" class="tool-btn">撤销</button>
-        <button id="exportBtn" class="tool-btn">导出图纸</button>
+        <button id="importImgBtn">导入图片</button>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
     </div>
-
-    <!-- 拼豆网格容器 -->
-    <div id="grid"></div>
 
     <!-- 色板区域 -->
-    <div class="color-panel" id="colorPanel"></div>
+    <div id="colorPanel"></div>
 
-    <!-- 裁剪弹窗 + 遮罩 默认隐藏 -->
-    <div class="mask" id="mask">
-        <div class="crop-modal">
-            <h3>裁剪图片（仅支持正方形选区）</h3>
-            <div class="crop-preview">
-                <canvas id="previewCanvas"></canvas>
-                <div class="crop-box" id="cropBox"></div>
-            </div>
-            <div class="crop-btn-group">
-                <button id="confirmCrop">确认并生成图纸</button>
-                <button id="cancelCrop">取消</button>
-            </div>
-        </div>
-    </div>
+    <!-- 网格画布 -->
+    <div id="grid"></div>
 
-    <!-- 加载提示 -->
-    <div class="loading-tip" id="loadingTip">处理中，请稍候...</div>
-
-    <!-- 隐藏文件选择器 -->
-    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
-
-    <!-- 引入脚本（顺序不能乱） -->
+    <!-- 脚本加载顺序：颜色库 → 图片模块 → 主逻辑 -->
     <script src="color.js"></script>
     <script src="modules/imageConverter.js"></script>
     <script src="main.js"></script>

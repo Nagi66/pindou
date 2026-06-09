@@ -8,7 +8,7 @@
 
     let currentGridSize = 50;
     let selectColor = {r:255,g:255,b:255};
-    let gridData = []; // 网格数据矩阵
+    let gridData = [];
 
     // 对外暴露全局变量（供图片模块读取）
     window.CURRENT_GRID_SIZE = currentGridSize;
